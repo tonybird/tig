@@ -1,0 +1,12 @@
+idiot help: print help for a command
+
+Usage: idiot help <command>
+
+Arguments:
+   <command>   the command to print help for
+
+Commands:
+   help
+   init
+   hash-object [-w] <file>
+   cat-file -p <address>

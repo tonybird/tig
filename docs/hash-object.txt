@@ -1,0 +1,8 @@
+idiot hash-object: compute address and maybe create blob from file
+
+Usage: idiot hash-object [-w] <file>
+
+Arguments:
+   -h       print this message
+   -w       write the file to database as a blob object
+   <file>   the file

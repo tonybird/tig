@@ -1,0 +1,6 @@
+idiot init: initialize a new database
+
+Usage: idiot init
+
+Arguments:
+   -h   print this message

@@ -1,0 +1,9 @@
+idiot: the other stupid content tracker
+
+Usage: idiot <command> [<args>]
+
+Commands:
+   help
+   init
+   hash-object [-w] <file>
+   cat-file -p <address>
