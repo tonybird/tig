@@ -6,7 +6,9 @@
            "help"        "help"
            "init"        "init"
            "hash-object" "hash-object"
-           "cat-file"    "cat-file"})
+           "cat-file"    "cat-file"
+           "write-wtree" "write-wtree"
+           "commit-tree" "commit-tree"})
 
 (defn help [args]
   (let [cmd (first args)]
