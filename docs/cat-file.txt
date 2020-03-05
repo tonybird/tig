@@ -1,8 +1,9 @@
 idiot cat-file: print information about an object
 
-Usage: idiot cat-file -p <address>
+Usage: idiot cat-file {-p|-t} <address>
 
 Arguments:
    -h          print this message
    -p          pretty-print contents based on object type
+   -t          print the type of the given object
    <address>   the SHA1-based address of the object

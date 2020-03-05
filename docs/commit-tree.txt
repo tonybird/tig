@@ -1,0 +1,9 @@
+idiot commit-tree: write a commit object based on the given tree
+
+Usage: idiot commit-tree <tree> -m "message" [(-p parent)...]
+
+Arguments:
+   -h               print this message
+   <tree>           the address of the tree object to commit
+   -m "<message>"   the commit message
+   -p <parent>      the address of a parent commit
