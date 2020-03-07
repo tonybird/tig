@@ -1,7 +1,7 @@
 (ns parse
   (:require [clojure.java.io :as io]))
 
-(defn parse-r-flag [[flag dir & rest]]
+(defn parse-r-flag [[_ dir & rest]]
   (when (or (= dir "-d") (= dir nil))
     (println "Error: the -r switch needs an argument")
     (System/exit 1))
@@ -10,7 +10,7 @@
     (System/exit 2))
   {:r dir :command rest})
 
-(defn parse-d-flag [[flag dir & rest]]
+(defn parse-d-flag [[_ dir & rest]]
   (when (or (= dir "-r") (= dir nil))
     (println "Error: the -d switch needs an argument")
     (System/exit 1))

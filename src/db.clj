@@ -23,7 +23,7 @@
 (defn- generate-path [opts address]
   (let [r (:r opts)
         d (:d opts)]
-  (str r "/" d "/objects/" (split-path address))))
+    (str r "/" d "/objects/" (split-path address))))
 
 (defn- add-header [blob]
   (str "blob " (count blob) \u0000 blob))
@@ -59,12 +59,13 @@
 (defn cat-file [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
         p (= (first args) "-p")
+        t (= (first args) "-t")
         r (:r opts)
         d (:d opts)]
     (cond
       h (help '("cat-file"))
       (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      (not p) (println "Error: the -p switch is required")
+      (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? (second args)) (println "Error: you must specify an address")
       (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       :else (->> args second (generate-path opts) io/file io/input-stream unzip remove-header print))))

@@ -9,4 +9,6 @@ Commands:
    help
    init
    hash-object [-w] <file>
-   cat-file -p <address>
+   cat-file {-p|-t} <address>
+   write-wtree
+   commit-tree <tree> -m "<message>" [(-p <parent>)...]

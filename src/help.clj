@@ -10,8 +10,10 @@
            "write-wtree" "write-wtree"
            "commit-tree" "commit-tree"})
 
-(defn help [args]
-  (let [cmd (first args)]
-    (if (contains? docs cmd)
-      (println (slurp (str "./docs/" (get docs cmd) ".txt")))
-      (println "Error: invalid command"))))
+
+(defn help
+  ([_ args] (help args))
+  ([args] (let [cmd (first args)]
+            (if (contains? docs cmd)
+              (println (slurp (str "./docs/" (get docs cmd) ".txt")))
+              (println "Error: invalid command")))))
