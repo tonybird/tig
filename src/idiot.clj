@@ -10,8 +10,8 @@
                "init"        db/init
                "hash-object" db/hash-object
                "cat-file"    db/cat-file
-               "write-wtree" help/help
-               "commit-tree" help/help})
+               "write-wtree" db/write-wtree
+               "commit-tree" db/commit-tree})
 
 (defn -main [& args]
   (let [{command :command d-val :d r-val :r} (parse/parse-flags args)

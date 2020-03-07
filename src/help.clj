@@ -10,7 +10,6 @@
            "write-wtree" "write-wtree"
            "commit-tree" "commit-tree"})
 
-
 (defn help
   ([_ args] (help args))
   ([args] (let [cmd (first args)]

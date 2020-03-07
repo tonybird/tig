@@ -22,6 +22,6 @@
       (let [flag (first (:command result)) command (:command result)]
         (if (contains? opts flag)
           (recur
-            (merge result ((get opts flag) command))
-            (dissoc opts (first args)))
+           (merge result ((get opts flag) command))
+           (dissoc opts (first args)))
           result)))))

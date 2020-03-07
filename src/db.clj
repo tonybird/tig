@@ -69,3 +69,30 @@
       (nil? (second args)) (println "Error: you must specify an address")
       (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       :else (->> args second (generate-path opts) io/file io/input-stream unzip remove-header print))))
+
+(defn write-wtree [opts args]
+  (let [cmd (first args)
+        h (or (= cmd "-h") (= cmd "--help"))
+        r (:r opts)
+        d (:d opts)]
+    (cond
+      h (help '("write-wtree"))
+      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (some? cmd) (println "Error: write-wtree accepts no arguments"))))
+
+(defn commit-tree [opts args]
+  (let [address (first args)
+        h (or (= address "-h") (= address "--help"))
+        m (= (second args) "-m")
+        m-value (and (>= (count args) 3) (nth args 2))
+        p (and (>= (count args) 4) (= "-p" (nth args 3)))
+        p-value (and (>= (count args) 5) (nth args 4))
+        r (:r opts)
+        d (:d opts)]
+    (cond
+      h (help '("commit-tree"))
+      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (nil? address) (println "Error: you must specify a tree address.")
+      (not m) (println "Error: you must specify a message.")
+      (not m-value) (println "Error: you must specify a message with the -m switch.")
+      (and p (not p-value)) (println "Error: you must specify a commit object with the -p switch."))))
