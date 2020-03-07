@@ -1,24 +1,25 @@
 (ns util
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str])
   (:import java.security.MessageDigest
            (java.io ByteArrayInputStream ByteArrayOutputStream)
            (java.util.zip InflaterInputStream DeflaterOutputStream)))
 
-(defn sha1-hash-bytes [data]
-  (.digest (MessageDigest/getInstance "sha1")
-           (.getBytes data)))
+(defn sha-bytes [bytes]
+  (.digest (MessageDigest/getInstance "sha1") bytes))
 
-(defn byte->hex-digits [byte]
-  (format "%02x"
-          (bit-and 0xff byte)))
+(defn sha-data [data]
+  (sha-bytes (.getBytes data)))
 
-(defn bytes->hex-string [bytes]
-  (->> bytes
-       (map byte->hex-digits)
-       (apply str)))
+(defn to-hex-string
+  "Convert the given byte array into a hex string, 2 characters per byte."
+  [bytes]
+  (letfn [(to-hex [byte]
+            (format "%02x" (bit-and 0xff byte)))]
+    (->> bytes (map to-hex) (apply str))))
 
 (defn sha1-sum [header+blob]
-  (bytes->hex-string (sha1-hash-bytes header+blob)))
+  (to-hex-string (sha-data header+blob)))
 
 (defn zip
   "Zip the given data with zlib. Return a ByteArrayInputStream of the zipped content."
@@ -38,3 +39,12 @@
     (->> (.toByteArray out)
          (map char)
          (apply str))))
+
+(defn add-header [type object]
+  (str type " " (count object) \u0000 object))
+
+(defn remove-header [header+object]
+  (->> (char 0)
+       (str/index-of header+object)
+       (+ 1)
+       (subs header+object)))

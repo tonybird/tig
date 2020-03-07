@@ -1,8 +1,7 @@
 (ns db
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
             [help :refer [help]]
-            [util :refer [sha1-sum zip unzip]]))
+            [util :refer [add-header remove-header sha1-sum zip unzip]]))
 
 (defn init [opts args]
   (let [cmd (first args)
@@ -25,19 +24,10 @@
         d (:d opts)]
     (str r "/" d "/objects/" (split-path address))))
 
-(defn- add-header [blob]
-  (str "blob " (count blob) \u0000 blob))
-
-(defn- remove-header [header+blob]
-  (->> (char 0)
-       (str/index-of header+blob)
-       (+ 1)
-       (subs header+blob)))
-
-(defn- save-blob-to-db [header+blob address opts]
+(defn save-to-db [header+object address opts]
   (let [path (generate-path opts address)]
     (io/make-parents path)
-    (io/copy (zip header+blob) (io/file path))
+    (io/copy (zip header+object) (io/file path))
     (println address)))
 
 (defn hash-object [opts args]
@@ -51,9 +41,9 @@
       (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (nil? filename) (println "Error: you must specify a file.")
       :else (let [file (try (slurp (str r "/" filename)) (catch Exception _))
-                  address (-> file add-header sha1-sum)]
+                  address (->> file (add-header "blob") sha1-sum)]
               (cond (nil? file) (println "Error: that file isn't readable")
-                    w (save-blob-to-db (add-header file) address opts)
+                    w (save-to-db (add-header "blob" file) address opts)
                     :else (println address))))))
 
 (defn cat-file [opts args]
@@ -69,30 +59,3 @@
       (nil? (second args)) (println "Error: you must specify an address")
       (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       :else (->> args second (generate-path opts) io/file io/input-stream unzip remove-header print))))
-
-(defn write-wtree [opts args]
-  (let [cmd (first args)
-        h (or (= cmd "-h") (= cmd "--help"))
-        r (:r opts)
-        d (:d opts)]
-    (cond
-      h (help '("write-wtree"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      (some? cmd) (println "Error: write-wtree accepts no arguments"))))
-
-(defn commit-tree [opts args]
-  (let [address (first args)
-        h (or (= address "-h") (= address "--help"))
-        m (= (second args) "-m")
-        m-value (and (>= (count args) 3) (nth args 2))
-        p (and (>= (count args) 4) (= "-p" (nth args 3)))
-        p-value (and (>= (count args) 5) (nth args 4))
-        r (:r opts)
-        d (:d opts)]
-    (cond
-      h (help '("commit-tree"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      (nil? address) (println "Error: you must specify a tree address.")
-      (not m) (println "Error: you must specify a message.")
-      (not m-value) (println "Error: you must specify a message with the -m switch.")
-      (and p (not p-value)) (println "Error: you must specify a commit object with the -p switch."))))
