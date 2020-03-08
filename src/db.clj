@@ -5,14 +5,14 @@
 
 (defn init [opts args]
   (let [cmd (first args)
-        r (:r opts)
-        d (:d opts)]
+        root (:root opts)
+        db (:db opts)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("init"))
       (some? cmd) (println "Error: init accepts no arguments")
-      (.exists (io/file (str r "/" d))) (println "Error:" d "directory already exists")
-      :else (do (io/make-parents (str r "/" d "/objects/foo"))
-                (println "Initialized empty Idiot repository in" d "directory")))))
+      (.exists (io/file (str root "/" db))) (println "Error:" db "directory already exists")
+      :else (do (io/make-parents (str root "/" db "/objects/foo"))
+                (println "Initialized empty Idiot repository in" db "directory")))))
 
 (defn- split-path [address]
   (let [dir (subs address 0 2)
@@ -20,9 +20,9 @@
     (str dir "/" file)))
 
 (defn- generate-path [opts address]
-  (let [r (:r opts)
-        d (:d opts)]
-    (str r "/" d "/objects/" (split-path address))))
+  (let [root (:root opts)
+        db (:db opts)]
+    (str root "/" db "/objects/" (split-path address))))
 
 (defn save-to-db [header+object address opts]
   (let [path (generate-path opts address)]
@@ -34,13 +34,13 @@
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
         w (= (first args) "-w")
         filename (if w (second args) (first args))
-        r (:r opts)
-        d (:d opts)]
+        root (:root opts)
+        db (:db opts)]
     (cond
       h (help '("hash-object"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (nil? filename) (println "Error: you must specify a file.")
-      :else (let [file (try (slurp (str r "/" filename)) (catch Exception _))
+      :else (let [file (try (slurp (str root "/" filename)) (catch Exception _))
                   address (->> file (add-header "blob") sha1-sum)]
               (cond (nil? file) (println "Error: that file isn't readable")
                     w (save-to-db (add-header "blob" file) address opts)
@@ -50,11 +50,11 @@
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
         p (= (first args) "-p")
         t (= (first args) "-t")
-        r (:r opts)
-        d (:d opts)]
+        root (:root opts)
+        db (:db opts)]
     (cond
       h (help '("cat-file"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? (second args)) (println "Error: you must specify an address")
       (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")

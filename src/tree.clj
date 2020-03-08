@@ -45,7 +45,7 @@
   (let [header+blob (util/add-header "blob" contents)
         blob-addr (util/sha-bytes (.getBytes header+blob))
         hex-str (util/to-hex-string blob-addr)]
-    (db/save-to-db header+blob hex-str {:r "." :d ".idiot"})
+    (db/save-to-db header+blob hex-str {:root "." :db ".idiot"})
     hex-str))
 
 (defn store-tree-entry [{:keys [type parent-path name contents]}]
@@ -83,13 +83,13 @@
 (defn write-wtree [opts args]
   (let [cmd (first args)
         h (or (= cmd "-h") (= cmd "--help"))
-        r (:r opts)
-        d (:d opts)]
+        root (:root opts)
+        db (:db opts)]
     (cond
       h (help/help '("write-wtree"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (some? cmd) (println "Error: write-wtree accepts no arguments")
-      :else (write-root {:root r :db d}))))
+      :else (write-root {:root root :db db}))))
 
 (defn commit-tree [opts args]
   (let [address (first args)
@@ -98,11 +98,11 @@
         m-value (and (>= (count args) 3) (nth args 2))
         p (and (>= (count args) 4) (= "-p" (nth args 3)))
         p-value (and (>= (count args) 5) (nth args 4))
-        r (:r opts)
-        d (:d opts)]
+        root (:root opts)
+        db (:db opts)]
     (cond
       h (help/help '("commit-tree"))
-      (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (nil? address) (println "Error: you must specify a tree address.")
       (not m) (println "Error: you must specify a message.")
       (not m-value) (println "Error: you must specify a message with the -m switch.")

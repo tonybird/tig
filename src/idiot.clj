@@ -15,8 +15,8 @@
                "commit-tree" tree/commit-tree})
 
 (defn -main [& args]
-  (let [{command :command d-val :d r-val :r} (parse/parse-flags args)
-        opts {:d d-val :r r-val}
+  (let [{command :command d-val :db root :root} (parse/parse-flags args)
+        opts {:db d-val :root root}
         sub-command (first command)
         sub-args (rest command)]
     (if (contains? commands sub-command)
