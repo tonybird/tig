@@ -67,8 +67,18 @@
 (comment
   (pprint (->Entry "." dir))
   (pprint (remove-subdir (->Entry "." dir) ".idiot"))
-  (store-entry (remove-subdir (->Entry "." dir) ".idiot"))
-  )
+  (store-entry (remove-subdir (->Entry "." dir) ".idiot")))
+
+(defn filter-empty-directories [entry]
+  (if (= :dir (:type entry))
+    (if (empty? (:contents entry))
+      nil
+      (update (update entry :contents #(mapv filter-empty-directories %)) :contents #(filter some? %)))
+    entry))
+
+(defn write-root [{:keys [root db]}]
+  (let [entry (-> (filter-empty-directories (->Entry root "")) (remove-subdir db))]
+    (println entry)))
 
 (defn write-wtree [opts args]
   (let [cmd (first args)
@@ -78,7 +88,8 @@
     (cond
       h (help/help '("write-wtree"))
       (not (.exists (io/file (str r "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      (some? cmd) (println "Error: write-wtree accepts no arguments"))))
+      (some? cmd) (println "Error: write-wtree accepts no arguments")
+      :else (write-root {:root r :db d}))))
 
 (defn commit-tree [opts args]
   (let [address (first args)
