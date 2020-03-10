@@ -41,15 +41,15 @@
 ;; Note: each of the following 3 functions, when completed, is expected to
 ;; return the address of the thing that it saved.
 
-(defn store-blob-entry [{:keys [contents]}]
+(defn store-blob-entry [{:keys [contents]} {:keys [root db] :as opts}]
   (let [header+blob (util/add-header "blob" contents)
         blob-addr (util/sha-bytes (.getBytes header+blob))
         hex-str (util/to-hex-string blob-addr)]
-    (db/save-to-db header+blob hex-str {:root "." :db ".idiot"})
+    (db/save-to-db header+blob hex-str opts)
     hex-str))
 
-(defn store-tree-entry [{:keys [type parent-path name contents]}]
-  (let [entries+addresses (mapv (juxt identity store-entry) contents)
+(defn store-tree-entry [{:keys [type parent-path name contents]} {:keys [root db] :as opts}]
+  (let [entries+addresses (mapv (juxt identity store-entry) contents) ; TODO error here wrong args. needs opts passed but not sure how.
         entry->debug-str (fn [[{:keys [name]} addr]] (str name "@" addr))
         entries-str (as-> entries+addresses $
                           (map entry->debug-str $)
@@ -59,26 +59,35 @@
     (println 'store-tree-entry dir-debug-str)
     dir-debug-str))
 
-(defn store-entry [{:keys [type] :as entry}]
+(defn store-entry [{:keys [type] :as entry} {:keys [root db] :as opts}]
   (if (= type :file)
-    (store-blob-entry entry)
-    (store-tree-entry entry)))
+    (store-blob-entry entry opts)
+    (store-tree-entry entry opts)))
 
 (comment
   (pprint (->Entry "." dir))
   (pprint (remove-subdir (->Entry "." dir) ".idiot"))
   (store-entry (remove-subdir (->Entry "." dir) ".idiot")))
 
-(defn filter-empty-directories [entry]
+(defn- filter-empty-directories [entry]
   (if (= :dir (:type entry))
     (if (empty? (:contents entry))
       nil
-      (update (update entry :contents #(mapv filter-empty-directories %)) :contents #(filter some? %)))
+      (->
+        (update entry :contents #(mapv filter-empty-directories %)) ; recur
+        (update :contents #(filter some? %))                ; remove null
+        (update :contents #(sort-by :name %))               ; abc order
+        (update :contents #(sort-by :type %))))             ; sort so :dir come before :file
     entry))
 
-(defn write-root [{:keys [root db]}]
-  (let [entry (-> (filter-empty-directories (->Entry root "")) (remove-subdir db))]
-    (println entry)))
+; can be run from repl but using "(store-root {:root "./test-dir" :db ".idiot"})"
+
+(defn- store-root [{:keys [root db] :as opts}]
+  (let [entry
+        (->
+          (filter-empty-directories (->Entry root ""))
+          (remove-subdir db))]
+    (store-entry entry opts)))
 
 (defn write-wtree [opts args]
   (let [cmd (first args)
@@ -87,9 +96,9 @@
         db (:db opts)]
     (cond
       h (help/help '("write-wtree"))
-      (not (.exists (io/file (str root "/" d)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (some? cmd) (println "Error: write-wtree accepts no arguments")
-      :else (write-root {:root root :db db}))))
+      :else (store-root {:root root :db db}))))
 
 (defn commit-tree [opts args]
   (let [address (first args)
