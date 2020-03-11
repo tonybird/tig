@@ -48,15 +48,27 @@
     (db/save-to-db header+blob hex-str opts)
     hex-str))
 
+(def modes {:dir 40000 :file 100644})
+
+(defn tree-to-db [tree-contents opts]
+  (let [tree-addr (util/sha-bytes (.getBytes tree-contents))
+        hex-str (util/to-hex-string tree-addr)]
+    (db/save-to-db tree-contents hex-str opts)
+    hex-str))
+
 (defn store-tree-entry [{:keys [type parent-path name contents]} {:keys [root db] :as opts}]
-  (let [entries+addresses (mapv (juxt identity store-entry) contents) ; TODO error here wrong args. needs opts passed but not sure how.
-        entry->debug-str (fn [[{:keys [name]} addr]] (str name "@" addr))
+  (let [store-entry-with-opts #(store-entry % opts)
+        entries+addresses (mapv (juxt identity store-entry-with-opts) contents)
+        ;; entry->debug-str (fn [[{:keys [name]} addr]] (str name "@" addr))
+        entry->str (fn [[{:keys [name]} addr]] (str (get modes type) " " name \u0000 addr))
         entries-str (as-> entries+addresses $
-                          (map entry->debug-str $)
-                          (apply str $)
-                          (str/replace $ #"\n" "\\\\n"))
+                          (map entry->str $)
+                          (apply str $))
+                          ;(str/replace $ #"\n" "\\\\n"))
         dir-debug-str (format "[dir(%s): %s]" name entries-str)]
+    (println entries+addresses)
     (println 'store-tree-entry dir-debug-str)
+    (println entries-str)
     dir-debug-str))
 
 (defn store-entry [{:keys [type] :as entry} {:keys [root db] :as opts}]
