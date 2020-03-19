@@ -46,7 +46,7 @@
         blob-addr (util/sha-bytes (.getBytes header+blob))
         hex-str (util/to-hex-string blob-addr)]
     (db/save-to-db header+blob hex-str opts)
-    hex-str))
+    blob-addr))
 
 (def modes {:dir 40000 :file 100644})
 
@@ -56,25 +56,30 @@
     (db/save-to-db tree-contents hex-str opts)
     hex-str))
 
+;tree [length in bytes]\000[list of entries]
+
+(defn- get-entry-byte-array [{:keys [type hash name]}]
+  (byte-array (concat (.getBytes (str (type modes) " " name \u0000)) hash)))
+
 (defn store-tree-entry [{:keys [type parent-path name contents]} {:keys [root db] :as opts}]
-  (let [store-entry-with-opts #(store-entry % opts)
-        entries+addresses (mapv (juxt identity store-entry-with-opts) contents)
-        ;; entry->debug-str (fn [[{:keys [name]} addr]] (str name "@" addr))
-        entry->str (fn [[{:keys [name]} addr]] (str (get modes type) " " name \u0000 addr))
-        entries-str (as-> entries+addresses $
-                          (map entry->str $)
-                          (apply str $))
-                          ;(str/replace $ #"\n" "\\\\n"))
-        dir-debug-str (format "[dir(%s): %s]" name entries-str)]
-    (println entries+addresses)
-    (println 'store-tree-entry dir-debug-str)
-    (println entries-str)
-    dir-debug-str))
+  (let [stored (->>
+                 (map #(store-entry % opts) contents)
+                 (map #(get-entry-byte-array %))
+                 (apply concat))
+        header+blob (util/add-header "tree" stored)
+        tree-addr (util/sha-bytes (.getBytes header+blob))
+        hex-str (util/to-hex-string tree-addr)]
+    (println "name: stored" name)
+    (prn (util/to-hex-string stored))
+    (println "name: addr" name)
+    (prn (util/to-hex-string tree-addr))
+    (db/save-to-db header+blob hex-str opts)
+    tree-addr))
 
 (defn store-entry [{:keys [type] :as entry} {:keys [root db] :as opts}]
   (if (= type :file)
-    (store-blob-entry entry opts)
-    (store-tree-entry entry opts)))
+    {:type :file :hash (store-blob-entry entry opts) :name (:name entry)}
+    {:type :dir :hash (store-tree-entry entry opts) :name (:name entry)}))
 
 (comment
   (pprint (->Entry "." dir))
@@ -110,7 +115,7 @@
       h (help/help '("write-wtree"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (some? cmd) (println "Error: write-wtree accepts no arguments")
-      :else (store-root {:root root :db db}))))
+      :else (println (:hash (store-root {:root root :db db}))))))
 
 (defn commit-tree [opts args]
   (let [address (first args)

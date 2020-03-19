@@ -28,7 +28,7 @@
   (let [path (generate-path opts address)]
     (io/make-parents path)
     (io/copy (zip header+object) (io/file path))
-    (println address)))
+    address))
 
 (defn hash-object [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
@@ -43,7 +43,7 @@
       :else (let [file (try (slurp (str root "/" filename)) (catch Exception _))
                   address (->> file (add-header "blob") sha1-sum)]
               (cond (nil? file) (println "Error: that file isn't readable")
-                    w (save-to-db (add-header "blob" file) address opts)
+                    w (println (save-to-db (add-header "blob" file) address opts))
                     :else (println address))))))
 
 (defn cat-file [opts args]
