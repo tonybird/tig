@@ -101,6 +101,9 @@
         (->
           (filter-empty-directories (->Entry root ""))
           (remove-subdir db))]
+    (when (empty? (:contents entry))
+      (println "The directory was empty, so nothing was saved.")
+      (System/exit 1))
     (store-entry entry opts)))
 
 (defn write-wtree [opts args]
@@ -112,7 +115,7 @@
       h (help/help '("write-wtree"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (some? cmd) (println "Error: write-wtree accepts no arguments")
-      :else (println (:hash (store-root {:root root :db db}))))))
+      :else (println (util/to-hex-string (:hash (store-root {:root root :db db})))))))
 
 (defn commit-tree [opts args]
   (let [address (first args)
