@@ -9,6 +9,8 @@
 
 (def dir "test-dir")
 
+(def modes {:dir 40000 :file 100644})
+
 (defrecord FileSystemEntry [type parent-path name contents])
 
 (defn ->FileEntry [parent-path name]
@@ -48,7 +50,6 @@
     (db/save-to-db header+blob hex-str opts)
     blob-addr))
 
-(def modes {:dir 40000 :file 100644})
 
 (defn tree-to-db [tree-contents opts]
   (let [tree-addr (util/sha-bytes (.getBytes tree-contents))
@@ -66,13 +67,9 @@
                  (map #(store-entry % opts) contents)
                  (map #(get-entry-byte-array %))
                  (apply concat))
-        header+blob (util/add-header "tree" stored)
-        tree-addr (util/sha-bytes (.getBytes header+blob))
+        header+blob (util/add-header-bytes "tree" stored)
+        tree-addr (util/sha-bytes header+blob)
         hex-str (util/to-hex-string tree-addr)]
-    (println "name: stored" name)
-    (prn (util/to-hex-string stored))
-    (println "name: addr" name)
-    (prn (util/to-hex-string tree-addr))
     (db/save-to-db header+blob hex-str opts)
     tree-addr))
 

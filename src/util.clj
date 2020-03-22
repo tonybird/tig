@@ -43,6 +43,9 @@
 (defn add-header [type object]
   (str type " " (count object) \u0000 object))
 
+(defn add-header-bytes [type object]
+  (byte-array (concat (.getBytes (str type " " (count object) \u0000)) object)))
+
 (defn remove-header [header+object]
   (->> (char 0)
        (str/index-of header+object)
