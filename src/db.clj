@@ -24,6 +24,10 @@
         db (:db opts)]
     (str root "/" db "/objects/" (split-path address))))
 
+(defn address-exists? [opts address]
+  (let [path (generate-path opts address)]
+    (.exists (io/file path))))
+
 (defn save-to-db [header+object address opts]
   (let [path (generate-path opts address)]
     (io/make-parents path)
@@ -46,6 +50,9 @@
                     w (println (save-to-db (add-header "blob" file) address opts))
                     :else (println address))))))
 
+(defn get-object [opts address]
+  (->> address (generate-path opts) io/file io/input-stream unzip))
+
 (defn cat-file [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
         p (= (first args) "-p")
@@ -58,4 +65,4 @@
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? (second args)) (println "Error: you must specify an address")
       (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
-      :else (->> args second (generate-path opts) io/file io/input-stream unzip remove-header print))))
+      :else (->> args second (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))

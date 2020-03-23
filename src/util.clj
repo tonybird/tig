@@ -36,9 +36,10 @@
   (with-open [unzipper (InflaterInputStream. input-stream)
               out (ByteArrayOutputStream.)]
     (io/copy unzipper out)
-    (->> (.toByteArray out)
-         (map char)
-         (apply str))))
+    (.toByteArray out)))
+
+(defn bytes->str [bytes]
+  (->> bytes (map char) (apply str)))
 
 (defn add-header [type object]
   (str type " " (count object) \u0000 object))
@@ -51,3 +52,12 @@
        (str/index-of header+object)
        (+ 1)
        (subs header+object)))
+
+(defn split-at-byte [b bytes]
+  (let [part1 (take-while (partial not= b) bytes)
+        part2 (nthrest bytes (-> part1 count inc))]
+    [part1 part2]))
+
+(defn get-object-type [bytes]
+  (let [type-bytes (first (split-at-byte 32 bytes))]
+    (bytes->str type-bytes)))

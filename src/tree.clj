@@ -1,13 +1,9 @@
 (ns tree
   (:require [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
             [db :as db]
             [help :as help]
             [util :as util])
   (:import java.io.File))
-
-(def dir "test-dir")
 
 (def modes {:dir 40000 :file 100644})
 
@@ -43,13 +39,13 @@
 ;; Note: each of the following 3 functions, when completed, is expected to
 ;; return the address of the thing that it saved.
 
-(defn store-blob-entry [{:keys [contents]} {:keys [root db] :as opts}]
+(defn store-blob-entry [{:keys [contents]} opts]
   (let [header+blob (util/add-header "blob" contents)
         blob-addr (util/sha-bytes (.getBytes header+blob))
-        hex-str (util/to-hex-string blob-addr)]
-    (db/save-to-db header+blob hex-str opts)
+        hex-str (util/to-hex-string blob-addr)
+        address-exists (db/address-exists? opts hex-str)]
+    (if (not address-exists) (db/save-to-db header+blob hex-str opts) nil)
     blob-addr))
-
 
 (defn tree-to-db [tree-contents opts]
   (let [tree-addr (util/sha-bytes (.getBytes tree-contents))
@@ -62,36 +58,31 @@
 (defn- get-entry-byte-array [{:keys [type hash name]}]
   (byte-array (concat (.getBytes (str (type modes) " " name \u0000)) hash)))
 
-(defn store-tree-entry [{:keys [type parent-path name contents]} {:keys [root db] :as opts}]
+(defn store-tree-entry [{:keys [_type _parent-path _name contents]} opts]
   (let [stored (->>
-                 (map #(store-entry % opts) contents)
-                 (map #(get-entry-byte-array %))
-                 (apply concat))
+                (map #(store-entry % opts) contents)
+                (map #(get-entry-byte-array %))
+                (apply concat))
         header+blob (util/add-header-bytes "tree" stored)
         tree-addr (util/sha-bytes header+blob)
         hex-str (util/to-hex-string tree-addr)]
     (db/save-to-db header+blob hex-str opts)
     tree-addr))
 
-(defn store-entry [{:keys [type] :as entry} {:keys [root db] :as opts}]
+(defn store-entry [{:keys [type] :as entry} opts]
   (if (= type :file)
     {:type :file :hash (store-blob-entry entry opts) :name (:name entry)}
     {:type :dir :hash (store-tree-entry entry opts) :name (:name entry)}))
-
-(comment
-  (pprint (->Entry "." dir))
-  (pprint (remove-subdir (->Entry "." dir) ".idiot"))
-  (store-entry (remove-subdir (->Entry "." dir) ".idiot")))
 
 (defn- filter-empty-directories [entry]
   (if (= :dir (:type entry))
     (if (empty? (:contents entry))
       nil
       (->
-        (update entry :contents #(mapv filter-empty-directories %)) ; recur
-        (update :contents #(filter some? %))                ; remove null
-        (update :contents #(sort-by :name %))               ; abc order
-        (update :contents #(sort-by :type %))))             ; sort so :dir come before :file
+       (update entry :contents #(mapv filter-empty-directories %)) ; recur
+       (update :contents #(filter some? %))                ; remove null
+       (update :contents #(sort-by :name %))               ; abc order
+       (update :contents #(sort-by :type %))))             ; sort so :dir come before :file
     entry))
 
 ; can be run from repl but using "(store-root {:root "./test-dir" :db ".idiot"})"
@@ -99,8 +90,8 @@
 (defn- store-root [{:keys [root db] :as opts}]
   (let [entry
         (->
-          (filter-empty-directories (->Entry root ""))
-          (remove-subdir db))]
+         (filter-empty-directories (->Entry root ""))
+         (remove-subdir db))]
     (when (empty? (:contents entry))
       (println "The directory was empty, so nothing was saved.")
       (System/exit 1))
@@ -130,6 +121,20 @@
       h (help/help '("commit-tree"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (nil? address) (println "Error: you must specify a tree address.")
+      (not (db/address-exists? opts address)) (println "Error: no tree object exists at that address.")
+      (not= "tree" (util/get-object-type (db/get-object opts address))) (println "Error: an object exists at that address, but it isn't a tree.")
       (not m) (println "Error: you must specify a message.")
       (not m-value) (println "Error: you must specify a message with the -m switch.")
-      (and p (not p-value)) (println "Error: you must specify a commit object with the -p switch."))))
+
+      ;; if any of the given parent addresses don’t correspond to stored objects
+      ;; print "Error: no commit object exists at address <addr>."
+      ;; where <addr> is the first parent address that does not have an object.
+
+      ;; if any of the given parent addresses refer to an object that isn’t a commit object
+      ;; print "Error: an object exists at address <addr>, but it isn't a commit."
+      ;; where <addr> is the first parent address that has a non-commit object.
+
+      (and p (not p-value)) (println "Error: you must specify a commit object with the -p switch.")
+
+      ;; Otherwise, write a new commit object and print its address
+      )))
