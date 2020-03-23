@@ -112,9 +112,13 @@
   (let [address (first args)
         h (or (= address "-h") (= address "--help"))
         m (= (second args) "-m")
-        m-value (and (>= (count args) 3) (nth args 2))
-        p (and (>= (count args) 4) (= "-p" (nth args 3)))
-        p-value (and (>= (count args) 5) (nth args 4))
+        message (and (>= (count args) 3) (nth args 2))
+        p (if (> (count args) 3) (subvec (vec args) 3) ())
+        p-values (filter #(not= "-p" %) p)
+        empty-p-flag (= "-p" (last p))
+        no-obj-at-p-addr (some #(when (not (db/address-exists? opts %)) %) p-values)
+        not-commit #(not= "commit" (util/get-object-type (db/get-object opts %)))
+        non-commit-at-p-addr (and (not no-obj-at-p-addr) (some #(when (not-commit %) %) p-values))
         root (:root opts)
         db (:db opts)]
     (cond
@@ -124,17 +128,27 @@
       (not (db/address-exists? opts address)) (println "Error: no tree object exists at that address.")
       (not= "tree" (util/get-object-type (db/get-object opts address))) (println "Error: an object exists at that address, but it isn't a tree.")
       (not m) (println "Error: you must specify a message.")
-      (not m-value) (println "Error: you must specify a message with the -m switch.")
-
-      ;; if any of the given parent addresses don’t correspond to stored objects
-      ;; print "Error: no commit object exists at address <addr>."
-      ;; where <addr> is the first parent address that does not have an object.
-
-      ;; if any of the given parent addresses refer to an object that isn’t a commit object
-      ;; print "Error: an object exists at address <addr>, but it isn't a commit."
-      ;; where <addr> is the first parent address that has a non-commit object.
-
-      (and p (not p-value)) (println "Error: you must specify a commit object with the -p switch.")
+      (not message) (println "Error: you must specify a message with the -m switch.")
+      no-obj-at-p-addr (println (str "Error: no commit object exists at address " no-obj-at-p-addr "."))
+      non-commit-at-p-addr (println (str "Error: an object exists at address " non-commit-at-p-addr ", but it isn't a commit."))
+      empty-p-flag (println "Error: you must specify a commit object with the -p switch.")
 
       ;; Otherwise, write a new commit object and print its address
-      )))
+      :else (let [author-str "Linus Torvalds <torvalds@transmeta.com> 1581997446 -0500"
+                  parent-str (reduce #(str %1 "parent " %2 "\n") "" p-values)
+                  commit-format (str "tree %s\n"
+                                     "%s"
+                                     "author %s\n"
+                                     "committer %s\n"
+                                     "\n"
+                                     "%s\n")
+                  commit-str (format commit-format
+                                     address
+                                     parent-str
+                                     author-str
+                                     author-str
+                                     message)
+                  header+commit (util/add-header "commit" commit-str)
+                  commit-addr (util/sha1-sum header+commit)]
+              (db/save-to-db header+commit commit-addr opts)
+              (println commit-addr)))))

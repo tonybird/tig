@@ -53,16 +53,25 @@
 (defn get-object [opts address]
   (->> address (generate-path opts) io/file io/input-stream unzip))
 
+(defn- cat-tree [bytes]
+  ;; TODO
+  ;; print each entry as: <mode> <type> <addr>\tab<name>\n
+  ;; example: 040000 tree cde220501bf8f8bb1e33dc49c3c0860e6f5a1132    dir
+  (println "it's a tree"))
+
 (defn cat-file [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
         p (= (first args) "-p")
         t (= (first args) "-t")
+        address (second args)
         root (:root opts)
         db (:db opts)]
     (cond
       h (help '("cat-file"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
-      (nil? (second args)) (println "Error: you must specify an address")
-      (->> args second (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
+      (nil? address) (println "Error: you must specify an address")
+      (->> address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
+      t (println (util/get-object-type (get-object opts address)))
+      (= "tree" (util/get-object-type (get-object opts address))) (cat-tree (get-object opts address))
       :else (->> args second (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))
