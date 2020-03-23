@@ -1,0 +1,8 @@
+idiot rev-parse: determine which commit a ref points to
+
+Usage: idiot rev-parse <ref>
+
+<ref> can be:
+- a branch name, like 'master'
+- literally 'HEAD'
+- literally '@', an alias for 'HEAD'

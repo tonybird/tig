@@ -6,12 +6,15 @@
 (defn init [opts args]
   (let [cmd (first args)
         root (:root opts)
-        db (:db opts)]
+        db (:db opts)
+        dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("init"))
       (some? cmd) (println "Error: init accepts no arguments")
-      (.exists (io/file (str root "/" db))) (println "Error:" db "directory already exists")
-      :else (do (io/make-parents (str root "/" db "/objects/foo"))
+      (.exists (io/file dir)) (println "Error:" db "directory already exists")
+      :else (do (io/make-parents (str dir "/objects/foo"))
+                (io/make-parents (str dir "/refs/heads/foo"))
+                (spit (str dir "/HEAD") "ref: refs/heads/master\n")
                 (println "Initialized empty Idiot repository in" db "directory")))))
 
 (defn- split-path [address]

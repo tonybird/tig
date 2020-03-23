@@ -7,9 +7,13 @@ Top-level arguments:
    -d <dir>   store the database in <dir> (default: .idiot)
 
 Commands:
+   branch [-d <branch>]
+   cat-file {-p|-t} <address>
+   commit <tree> -m "message" [(-p parent)...]
+   commit-tree <tree> -m "message" [(-p parent)...]
+   hash-object [-w] <file>
    help
    init
-   hash-object [-w] <file>
-   cat-file {-p|-t} <address>
+   rev-parse <ref>
+   switch [-c] <branch>
    write-wtree
-   commit-tree <tree> -m "<message>" [(-p <parent>)...]

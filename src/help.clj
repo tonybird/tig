@@ -8,7 +8,11 @@
            "hash-object" "hash-object"
            "cat-file"    "cat-file"
            "write-wtree" "write-wtree"
-           "commit-tree" "commit-tree"})
+           "commit-tree" "commit-tree"
+           "rev-parse"   "rev-parse"
+           "switch"      "switch"
+           "branch"      "branch"
+           "commit"      "commit"})
 
 (defn help
   ([_ args] (help args))

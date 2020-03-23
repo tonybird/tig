@@ -2,7 +2,8 @@
   (:require [help :as help]
             [db :as db]
             [parse :as parse]
-            [tree :as tree]))
+            [tree :as tree]
+            [switch :as switch]))
 
 (def commands {nil           help/help
                "-h"          help/help
@@ -12,7 +13,11 @@
                "hash-object" db/hash-object
                "cat-file"    db/cat-file
                "write-wtree" tree/write-wtree
-               "commit-tree" tree/commit-tree})
+               "commit-tree" tree/commit-tree
+               "rev-parse"   switch/rev-parse
+               "switch"      switch/switch
+               "branch"      switch/branch
+               "commit"      switch/commit})
 
 (defn -main [& args]
   (let [{command :command d-val :db root :root} (parse/parse-flags args)

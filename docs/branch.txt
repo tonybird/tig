@@ -1,0 +1,6 @@
+idiot branch: list or delete branches
+
+Usage: idiot branch [-d <branch>]
+
+Arguments:
+   -d <branch>   delete branch <branch>
