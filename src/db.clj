@@ -53,11 +53,20 @@
 (defn get-object [opts address]
   (->> address (generate-path opts) io/file io/input-stream unzip))
 
-(defn- cat-tree [bytes]
-  ;; TODO
-  ;; print each entry as: <mode> <type> <addr>\tab<name>\n
-  ;; example: 040000 tree cde220501bf8f8bb1e33dc49c3c0860e6f5a1132    dir
-  (println "it's a tree"))
+(defn- cat-tree [opts address]
+  (let [bytes (get-object opts address)
+        removed-header (second (util/split-at-byte 0 bytes))
+        mode (util/bytes->str (first (util/split-at-byte 32 removed-header)))
+        mode (if (= "40000" mode) "040000" mode)
+        mode-rest-bytes (second (util/split-at-byte 32 removed-header))
+        filename (util/bytes->str (first (util/split-at-byte 0 mode-rest-bytes)))
+        addr-bytes (second (util/split-at-byte 0 mode-rest-bytes))
+        addr (util/to-hex-string addr-bytes)
+        obj (db/get-object opts addr)
+        type (util/get-object-type obj)
+        entry-format (str "%s %s %s\t%s\n")
+        entry-str (format entry-format mode type addr filename)]
+    (print entry-str)))
 
 (defn cat-file [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))
@@ -73,5 +82,5 @@
       (nil? address) (println "Error: you must specify an address")
       (->> address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       t (println (util/get-object-type (get-object opts address)))
-      (= "tree" (util/get-object-type (get-object opts address))) (cat-tree (get-object opts address))
+      (= "tree" (util/get-object-type (get-object opts address))) (cat-tree opts address)
       :else (->> args second (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))
