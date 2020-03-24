@@ -56,7 +56,7 @@
                       (spit head-addr (str "ref: refs/heads/" branch-name "\n"))
                       (println (str "Switched to a new branch '" branch-name "'"))))))))
 
-(defn- branch-prefix [dir branch-name]
+(defn- add-branch-prefix [dir branch-name]
   (let [head-addr (str dir "/HEAD")
         head-contents (slurp head-addr)
         head-branch-name (str/trim-newline (subs head-contents 16))
@@ -67,9 +67,9 @@
 
 (defn- print-branches [dir]
   (let [files (->> (str dir "/refs/heads/") io/file file-seq rest)
-        filenames (map #(.getName %) files)
-        with-prefix (map #(branch-prefix dir %) filenames)]
-    (doseq [str with-prefix]
+        filenames (sort (map #(.getName %) files))
+        names-with-prefixes (map #(add-branch-prefix dir %) filenames)]
+    (doseq [str names-with-prefixes]
       (println str))))
 
 (defn- delete-branch [dir branch-name]
@@ -77,14 +77,14 @@
         head-contents (slurp (str dir "/HEAD"))
         head-branch-name (str/trim-newline (subs head-contents 16))]
     (cond
-      (-> path io/file .exists not) (println (str "Error: branch '" branch-name"' not found."))
-      (= head-branch-name branch-name) (println (str "Error: cannot delete checked-out branch '" branch-name"'."))
+      (-> path io/file .exists not) (println (str "Error: branch '" branch-name "' not found."))
+      (= head-branch-name branch-name) (println (str "Error: cannot delete checked-out branch '" branch-name "'."))
       :else (do (io/delete-file path)
                 (println (str "Deleted branch " branch-name "."))))))
 
 (defn branch [opts args]
   (let [cmd (first args)
-        d (= cmd "-c")
+        d (= cmd "-d")
         dir (str (:root opts) "/" (:db opts))]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("branch"))
