@@ -57,7 +57,7 @@
   (->> address (generate-path opts) io/file io/input-stream unzip))
 
 (defn- cat-tree-recur [entry opts]
-  (when (not (empty? entry))
+  (when (seq entry)
     (let [mode (util/bytes->str (first (util/split-at-byte 32 entry)))
           mode (if (= "40000" mode) "040000" mode)
           mode-rest-bytes (second (util/split-at-byte 32 entry))
