@@ -120,7 +120,8 @@
         not-commit #(not= "commit" (util/get-object-type (db/get-object opts %)))
         non-commit-at-p-addr (and (not no-obj-at-p-addr) (some #(when (not-commit %) %) p-values))
         root (:root opts)
-        db (:db opts)]
+        db (:db opts)
+        verbose? (not (contains? opts :silent))]
     (cond
       h (help/help '("commit-tree"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
@@ -151,4 +152,5 @@
                   header+commit (util/add-header "commit" commit-str)
                   commit-addr (util/sha1-sum header+commit)]
               (db/save-to-db header+commit commit-addr opts)
-              (println commit-addr)))))
+              (when verbose? (println commit-addr))
+              commit-addr))))

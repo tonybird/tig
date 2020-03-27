@@ -9,12 +9,12 @@
         head-contents (slurp head-addr)
         is-ref? (str/starts-with? head-contents "ref: ")]
     (if is-ref?
-      (str/trim-newline (str dir "/" (subs head-contents 5)))
-      head-addr)))
+      {:path (str/trim-newline (str dir "/" (subs head-contents 5))) :is-ref is-ref?}
+      {:path head-addr :is-ref is-ref?})))
 
 (defn- get-ref-address [dir name]
   (if (or (= name "HEAD") (= name "@"))
-    (get-head-pointer dir)
+    (:path (get-head-pointer dir))
     (str dir "/refs/heads/" name)))
 
 (defn rev-parse [opts args]
@@ -95,8 +95,13 @@
       d (delete-branch dir (second args))
       :else (print-branches dir))))
 
-(defn commit [opts args]
-  (let [cmd (first args)]
+(defn commit [{:keys [root db] :as opts} args]
+  (let [cmd (first args)
+        opts (assoc opts :silent true)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("commit"))
-      :else (commit-tree opts args))))
+      :else (let [sha (commit-tree opts args)]
+              (when sha (do (println "Commit created.")
+                            (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
+                              (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
+                              (spit path sha))))))))
