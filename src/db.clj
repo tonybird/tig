@@ -56,20 +56,27 @@
 (defn get-object [opts address]
   (->> address (generate-path opts) io/file io/input-stream unzip))
 
+(defn- cat-tree-recur [entry opts]
+  (when (not (empty? entry))
+    (let [mode (util/bytes->str (first (util/split-at-byte 32 entry)))
+          mode (if (= "40000" mode) "040000" mode)
+          mode-rest-bytes (second (util/split-at-byte 32 entry))
+          filename (util/bytes->str (first (util/split-at-byte 0 mode-rest-bytes)))
+          addr-bytes-and-rest (second (util/split-at-byte 0 mode-rest-bytes))
+          addr-bytes (first (split-at 20 addr-bytes-and-rest))
+          rest-entries (last (split-at 20 addr-bytes-and-rest))
+          addr (util/to-hex-string addr-bytes)
+          obj (db/get-object opts addr)
+          type (util/get-object-type obj)
+          entry-format (str "%s %s %s\t%s")
+          entry-str (format entry-format mode type addr filename)]
+      (println entry-str)
+      (cat-tree-recur rest-entries opts))))
+
 (defn- cat-tree [opts address]
   (let [bytes (get-object opts address)
-        removed-header (second (util/split-at-byte 0 bytes))
-        mode (util/bytes->str (first (util/split-at-byte 32 removed-header)))
-        mode (if (= "40000" mode) "040000" mode)
-        mode-rest-bytes (second (util/split-at-byte 32 removed-header))
-        filename (util/bytes->str (first (util/split-at-byte 0 mode-rest-bytes)))
-        addr-bytes (second (util/split-at-byte 0 mode-rest-bytes))
-        addr (util/to-hex-string addr-bytes)
-        obj (db/get-object opts addr)
-        type (util/get-object-type obj)
-        entry-format (str "%s %s %s\t%s\n")
-        entry-str (format entry-format mode type addr filename)]
-    (print entry-str)))
+        removed-header (second (util/split-at-byte 0 bytes))]
+    (cat-tree-recur removed-header opts)))
 
 (defn cat-file [opts args]
   (let [h (or (= (first args) "-h") (= (first args) "--help"))

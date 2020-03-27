@@ -59,7 +59,7 @@
 (defn- add-branch-prefix [dir branch-name]
   (let [head-addr (str dir "/HEAD")
         head-contents (slurp head-addr)
-        head-branch-name (str/trim-newline (subs head-contents 16))
+        head-branch-name (str/trim-newline (last (str/split head-contents #"/")))
         match (= branch-name head-branch-name)]
     (if match
       (str "* " branch-name)
@@ -69,8 +69,7 @@
   (let [files (->> (str dir "/refs/heads/") io/file file-seq rest)
         filenames (sort (map #(.getName %) files))
         names-with-prefixes (map #(add-branch-prefix dir %) filenames)]
-    (doseq [str names-with-prefixes]
-      (println str))))
+    (println (str/join "\n" names-with-prefixes))))
 
 (defn- delete-branch [dir branch-name]
   (let [path (str dir "/refs/heads/" branch-name)
@@ -101,7 +100,8 @@
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("commit"))
       :else (let [sha (commit-tree opts args)]
-              (when sha (println "Commit created.")
-                        (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
-                          (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
-                          (spit path sha)))))))
+              (when sha
+                (println "Commit created.")
+                (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
+                  (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
+                  (spit path (str sha "\n"))))))))
