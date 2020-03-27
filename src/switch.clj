@@ -52,7 +52,7 @@
                 (and (not c) (not exists?)) (println "Error: no ref with that name exists.")
                 (not c) (do (spit head-addr (str "ref: refs/heads/" branch-name "\n"))
                             (println (str "Switched to branch '" branch-name "'")))
-                c (do (spit branch-addr (slurp (get-head-pointer dir)))
+                c (do (spit branch-addr (slurp (:path (get-head-pointer dir))))
                       (spit head-addr (str "ref: refs/heads/" branch-name "\n"))
                       (println (str "Switched to a new branch '" branch-name "'"))))))))
 
@@ -101,7 +101,7 @@
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("commit"))
       :else (let [sha (commit-tree opts args)]
-              (when sha (do (println "Commit created.")
-                            (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
-                              (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
-                              (spit path sha))))))))
+              (when sha (println "Commit created.")
+                        (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
+                          (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
+                          (spit path sha)))))))
