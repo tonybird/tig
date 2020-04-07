@@ -103,5 +103,5 @@
               (when sha
                 (println "Commit created.")
                 (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
-                  (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")))
-                  (spit path (str sha "\n"))))))))
+                  (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) "."))
+                               (spit path (str sha "\n")))))))))
