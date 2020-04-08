@@ -12,3 +12,11 @@ clojure -Rtest \
 ```
 
 to run tests use `clojure -A:test --color [--autotest]`
+
+
+## Running clojure format
+
+```
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4" :paths "src/"}}}' \
+  -m cljfmt.main [check|fix]
+```
