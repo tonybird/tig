@@ -17,15 +17,27 @@
                 (spit (str dir "/HEAD") "ref: refs/heads/master\n")
                 (println "Initialized empty Idiot repository in" db "directory")))))
 
-(defn- split-path [address]
+(defn- file-autocomplete [root db dir file]
+  (if (= (count file) 38)
+    file
+    (->> (str root "/" db "/objects/" dir)
+         io/file
+         file-seq
+         (filter #(.isFile %))
+         (map #(.getName %))
+         (filter #(= (subs % 0 (count file)) file))
+         first)))
+
+(defn- split-path [address {:keys [root db]}]
   (let [dir (subs address 0 2)
-        file (subs address 2)]
-    (str dir "/" file)))
+        file (subs address 2)
+        complete-file (file-autocomplete root db dir file)]
+    (str dir "/" complete-file)))
 
 (defn- generate-path [opts address]
   (let [root (:root opts)
         db (:db opts)]
-    (str root "/" db "/objects/" (split-path address))))
+    (str root "/" db "/objects/" (split-path address opts))))
 
 (defn address-exists? [opts address]
   (let [path (generate-path opts address)]

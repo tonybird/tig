@@ -1,4 +1,4 @@
-{:deps {} :paths ["src" "classes" "spec"]
+{:deps {ring {:mvn/version "1.8.0"} hiccup {:mvn/version "1.0.5"}} :paths ["src" "classes" "spec"]
 
  :aliases
   {:test {:extra-deps {speclj

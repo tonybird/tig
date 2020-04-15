@@ -104,3 +104,55 @@
                 (println "Commit created.")
                 (let [{:keys [path is-ref]} (get-head-pointer (str root "/" db))]
                   (when is-ref (println (str "Updated branch " (str/trim (last (str/split path #"/"))) ".")) (spit path (str sha "\n")))))))))
+
+(defn- print-commit [opts commit-addr n]
+  (when (not= n 0)
+    (let [commit-body (-> (db/get-object opts commit-addr)
+                          (util/bytes->str)
+                          (str/split #"\n"))
+          parent (first (filter #(str/starts-with? % "parent") commit-body))]
+      (when parent (let [parent-addr (subs parent 7)]
+                     (println parent-addr)
+                     (print-commit opts parent-addr (- n 1)))))))
+
+(defn- print-commit-oneline [opts commit-addr n]
+  (when (not= n 0)
+    (let [commit-body (-> (db/get-object opts commit-addr)
+                          (util/bytes->str)
+                          (str/split #"\n"))
+          parent (first (filter #(str/starts-with? % "parent") commit-body))]
+      (when parent (let [parent-addr (subs parent 7)]
+                     (println (str (subs parent-addr 0 7) " " (nth commit-body 5)))
+                     (print-commit-oneline opts parent-addr (- n 1)))))))
+
+(defn parse-num-non-negative [args arg-name]
+  (if (= (first args) arg-name)
+    {:n (Integer/parseInt (nth args 1)) :ref (last args)}
+    {:n 3000 :ref (first args)}))
+
+
+(defn rev-list [{:keys [root db] :as opts} args]
+  (let [cmd (first args)
+        dir (str root "/" db)]
+    (cond
+      (or (= cmd "-h") (= cmd "--help")) (help '("rev-list"))
+      (= (count args) 2) (println "Expected num for n")
+      :else (let [{n :n ref :ref} (parse-num-non-negative args "-n")
+                  file-name (get-ref-address dir ref)]
+              (print-commit opts (.trim (slurp file-name)) n)))))
+
+(defn log [{:keys [root db] :as opts} args]
+  (let [cmd (first args)
+        dir (str root "/" db)]
+    (cond
+      (or (= cmd "-h") (= cmd "--help")) (help '("log"))
+      (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
+      (= (count args) 3) (println "Expected num for n")
+      :else (let [{n :n ref :ref} (parse-num-non-negative (rest args) "-n")
+                  file-name (get-ref-address dir ref)]
+              (print-commit-oneline opts (.trim (slurp file-name)) n)
+              ))))
+
+
+
+

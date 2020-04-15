@@ -3,7 +3,8 @@
             [db :as db]
             [parse :as parse]
             [tree :as tree]
-            [switch :as switch]))
+            [switch :as switch]
+            [server :as server]))
 
 (def commands {nil           help/help
                "-h"          help/help
@@ -17,6 +18,9 @@
                "rev-parse"   switch/rev-parse
                "switch"      switch/switch
                "branch"      switch/branch
+               "rev-list"    switch/rev-list
+               "log"         switch/log
+               "explore"     server/explore
                "commit"      switch/commit})
 
 (defn -main [& args]

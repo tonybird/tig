@@ -12,6 +12,9 @@
            "rev-parse"   "rev-parse"
            "switch"      "switch"
            "branch"      "branch"
+           "rev-list"    "rev-list"
+           "log"         "log"
+           "explore"     "explore"
            "commit"      "commit"})
 
 (defn help

@@ -1,0 +1,6 @@
+idiot explore: start a web server to explore the database
+
+Usage: idiot explore [-p <port>]
+
+Arguments:
+   -p <port>   listen on the given port (default: 3000)
