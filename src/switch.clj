@@ -127,7 +127,7 @@
 
 (defn parse-num-non-negative [args arg-name]
   (if (= (first args) arg-name)
-    {:n (Integer/parseInt (nth args 1)) :ref (last args)}
+    {:n (try (Integer/parseInt (nth args 1)) (catch Exception e (println (str "Error: the argument for '" arg-name "' must be a non-negative integer.")) :fail)) :ref (last args)}
     {:n 3000 :ref (first args)}))
 
 
@@ -136,10 +136,14 @@
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("rev-list"))
-      (= (count args) 2) (println "Expected num for n")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (= (count args) 2) (println "Error: you must specify a numeric count with '-n'.")
       :else (let [{n :n ref :ref} (parse-num-non-negative args "-n")
                   file-name (get-ref-address dir ref)]
-              (print-commit opts (.trim (slurp file-name)) n)))))
+              (cond
+                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " cmd "."))
+                (= n :fail) nil
+                :else (print-commit opts (.trim (slurp file-name)) n))))))
 
 (defn log [{:keys [root db] :as opts} args]
   (let [cmd (first args)
@@ -147,11 +151,14 @@
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("log"))
       (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
-      (= (count args) 3) (println "Expected num for n")
+      (= (count args) 3) (println "Error: you must specify a numeric count with '-n'.")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
       :else (let [{n :n ref :ref} (parse-num-non-negative (rest args) "-n")
                   file-name (get-ref-address dir ref)]
-              (print-commit-oneline opts (.trim (slurp file-name)) n)
-              ))))
+              (cond
+                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " cmd "."))
+                (= n :fail) nil
+                :else (print-commit-oneline opts (.trim (slurp file-name)) n))))))
 
 
 

@@ -25,10 +25,12 @@
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help/help '("explore"))
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (= (count args) 1) (println "Error: you must specify a numeric port with -p.")
       :else (let [{n :n ref :ref} (switch/parse-num-non-negative args "-p")
                   files (->> (str dir "/refs/heads/") io/file file-seq rest)
                   filenames (sort (map #(.getName %) files))]
-              (println (str "Starting server on port " n "."))
-              (start-server (get-handler (get-html filenames)))))))
+              (cond
+                (= n :fail) nil
+                :else ((println (str "Starting server on port " n "."))(start-server (get-handler (get-html filenames)))))))))
 
