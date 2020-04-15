@@ -29,6 +29,6 @@
       :else (let [{n :n ref :ref} (switch/parse-num-non-negative args "-p")
                   files (->> (str dir "/refs/heads/") io/file file-seq rest)
                   filenames (sort (map #(.getName %) files))]
-              (start-server (get-handler (get-html filenames)))
-              (println (str "Starting server on port " n "."))))))
+              (println (str "Starting server on port " n "."))
+              (start-server (get-handler (get-html filenames)))))))
 
