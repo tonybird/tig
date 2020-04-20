@@ -24,13 +24,14 @@
           file (subs address 2)]
       (if (= (count file) 38)
         address
-        (str dir (->> (str root "/" db "/objects/" dir)
-                  io/file
-                  file-seq
-                  (filter #(.isFile %))
-                  (map #(.getName %))
-                  (filter #(= (subs % 0 (count file)) file))
-                  first))))))
+        (->> (str root "/" db "/objects/" dir)
+                       io/file
+                       file-seq
+                       (filter #(.isFile %))
+                       (map #(.getName %))
+                       (filter #(= (subs % 0 (count file)) file))
+                       (map #(str dir %))
+                       )))))
 
 (defn- split-path [address {:keys [root db]}]
   (let [dir (subs address 0 2)
@@ -100,13 +101,15 @@
         address (second args)
         root (:root opts)
         db (:db opts)
-        full-address (file-autocomplete root db address)]
+        full-address-list (file-autocomplete root db address)
+        full-address (first full-address-list)]
     (cond
       h (help '("cat-file"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? address) (println "Error: you must specify an address")
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
+      (> (count address) 1) (println (str "Error: ambiguous match for address '" address "'"))
       (->> full-address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       t (println (util/get-object-type (get-object opts full-address)))
       (= "tree" (util/get-object-type (get-object opts full-address))) (cat-tree opts full-address)
