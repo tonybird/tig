@@ -109,5 +109,5 @@
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
       (->> full-address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       t (println (util/get-object-type (get-object opts full-address)))
-      (= "tree" (util/get-object-type (get-object opts full-address))) (cat-tree opts address)
-      :else (->> args second (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))
+      (= "tree" (util/get-object-type (get-object opts full-address))) (cat-tree opts full-address)
+      :else (->> full-address (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))
