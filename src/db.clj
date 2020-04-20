@@ -17,22 +17,25 @@
                 (spit (str dir "/HEAD") "ref: refs/heads/master\n")
                 (println "Initialized empty Idiot repository in" db "directory")))))
 
-(defn- file-autocomplete [root db dir file]
-  (if (= (count file) 38)
-    file
-    (->> (str root "/" db "/objects/" dir)
-         io/file
-         file-seq
-         (filter #(.isFile %))
-         (map #(.getName %))
-         (filter #(= (subs % 0 (count file)) file))
-         first)))
+(defn- file-autocomplete [root db address]
+  (if (< (count address) 4)
+    nil
+    (let [dir (subs address 0 2)
+          file (subs address 2)]
+      (if (= (count file) 38)
+        address
+        (str dir (->> (str root "/" db "/objects/" dir)
+                  io/file
+                  file-seq
+                  (filter #(.isFile %))
+                  (map #(.getName %))
+                  (filter #(= (subs % 0 (count file)) file))
+                  first))))))
 
 (defn- split-path [address {:keys [root db]}]
   (let [dir (subs address 0 2)
-        file (subs address 2)
-        complete-file (file-autocomplete root db dir file)]
-    (str dir "/" complete-file)))
+        file (subs address 2)]
+    (str dir "/" file)))
 
 (defn- generate-path [opts address]
   (let [root (:root opts)
@@ -96,14 +99,16 @@
         t (= (first args) "-t")
         address (second args)
         root (:root opts)
-        db (:db opts)]
+        db (:db opts)
+        full-address (file-autocomplete root db address)]
+    (println full-address)
     (cond
       h (help '("cat-file"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? address) (println "Error: you must specify an address")
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
-      (->> address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
-      t (println (util/get-object-type (get-object opts address)))
-      (= "tree" (util/get-object-type (get-object opts address))) (cat-tree opts address)
+      (->> full-address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
+      t (println (util/get-object-type (get-object opts full-address)))
+      (= "tree" (util/get-object-type (get-object opts full-address))) (cat-tree opts address)
       :else (->> args second (generate-path opts) io/file io/input-stream unzip util/bytes->str remove-header print))))
