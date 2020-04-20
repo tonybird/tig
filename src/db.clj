@@ -101,7 +101,6 @@
         root (:root opts)
         db (:db opts)
         full-address (file-autocomplete root db address)]
-    (println full-address)
     (cond
       h (help '("cat-file"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
