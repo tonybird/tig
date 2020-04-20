@@ -102,6 +102,7 @@
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? address) (println "Error: you must specify an address")
+      (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
       (->> address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       t (println (util/get-object-type (get-object opts address)))
       (= "tree" (util/get-object-type (get-object opts address))) (cat-tree opts address)
