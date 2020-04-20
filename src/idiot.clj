@@ -28,6 +28,7 @@
         opts {:db d-val :root root}
         sub-command (first command)
         sub-args (rest command)]
-    (if (contains? commands sub-command)
-      ((get commands sub-command) opts sub-args)
-      (println "Error: invalid command"))))
+    (when (not (or (nil? d-val) (nil? root)))
+      (if (contains? commands sub-command)
+        ((get commands sub-command) opts sub-args)
+        (println "Error: invalid command")))))

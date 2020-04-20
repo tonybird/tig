@@ -2,19 +2,15 @@
   (:require [clojure.java.io :as io]))
 
 (defn parse-r-flag [[_ dir & rest]]
-  (when (or (= dir "-d") (= dir nil))
-    (println "Error: the -r switch needs an argument")
-    (System/exit 1))
-  (when (not (.exists (io/file dir)))
-    (println "Error: the directory specified by -r does not exist")
-    (System/exit 2))
-  {:root dir :command rest})
+  (cond
+    (or (= dir "-d") (= dir nil)) (do (println "Error: the -r switch needs an argument") {:root nil :command nil})
+    (not (.exists (io/file dir))) (do (println "Error: the directory specified by -r does not exist") {:root nil :command nil})
+    :else {:root dir :command rest}))
 
 (defn parse-d-flag [[_ dir & rest]]
-  (when (or (= dir "-r") (= dir nil))
-    (println "Error: the -d switch needs an argument")
-    (System/exit 1))
-  {:db dir :command rest})
+  (cond
+    (or (= dir "-r") (= dir nil)) (do (println "Error: the -d switch needs an argument") {:db dir :command rest})
+    :else {:db dir :command rest}))
 
 (defn parse-flags [args]
   (let [top-level-flags {"-r" parse-r-flag "-d" parse-d-flag}]
@@ -25,3 +21,4 @@
            (merge result ((get opts flag) command))
            (dissoc opts (first args)))
           result)))))
+
