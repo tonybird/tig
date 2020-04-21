@@ -116,20 +116,28 @@
         m (= (second args) "-m")
         message (and (>= (count args) 3) (nth args 2))
         p (if (> (count args) 3) (subvec (vec args) 3) ())
-        p-values (filter #(not= "-p" %) p)
+        p-values-raw (filter #(not= "-p" %) p)
+        p-values (map #(first (db/file-autocomplete (:root opts) (:db opts) %)) p-values-raw)
         empty-p-flag (= "-p" (last p))
         no-obj-at-p-addr (some #(when (not (db/address-exists? opts %)) %) p-values)
         not-commit #(not= "commit" (util/get-object-type (db/get-object opts %)))
         non-commit-at-p-addr (and (not no-obj-at-p-addr) (some #(when (not-commit %) %) p-values))
         root (:root opts)
         db (:db opts)
+        full-address-list (db/file-autocomplete root db address)
+        full-address (first full-address-list)
         verbose? (not (contains? opts :silent))]
     (cond
       h (help/help '("commit-tree"))
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (nil? address) (println "Error: you must specify a tree address.")
-      (not (db/address-exists? opts address)) (println "Error: no tree object exists at that address.")
-      (not= "tree" (util/get-object-type (db/get-object opts address))) (println "Error: an object exists at that address, but it isn't a tree.")
+      ; begin check for file-autocomplete
+      (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
+      (nil? full-address) (println "Error: that address doesn't exist")
+      (> (count full-address-list) 1) (println (str "Error: ambiguous match for address '" address "'"))
+      ; end
+      (not (db/address-exists? opts full-address)) (println "Error: no tree object exists at that address.")
+      (not= "tree" (util/get-object-type (db/get-object opts full-address))) (println "Error: an object exists at that address, but it isn't a tree.")
       (not m) (println "Error: you must specify a message.")
       (not message) (println "Error: you must specify a message with the -m switch.")
       no-obj-at-p-addr (println (str "Error: no commit object exists at address " no-obj-at-p-addr "."))
@@ -138,7 +146,7 @@
 
       ;; Otherwise, write a new commit object and print its address
       :else (let [author-str "Linus Torvalds <torvalds@transmeta.com> 1581997446 -0500"
-                  parent-str (reduce #(str %1 "parent " %2 "\n") "" p-values)
+                  parent-str (reduce #(str %1 "parent " %2 "\n") "" p-values-raw)
                   commit-format (str "tree %s\n"
                                      "%s"
                                      "author %s\n"
@@ -146,7 +154,7 @@
                                      "\n"
                                      "%s\n")
                   commit-str (format commit-format
-                                     address
+                                     full-address
                                      parent-str
                                      author-str
                                      author-str

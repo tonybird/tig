@@ -17,21 +17,20 @@
                 (spit (str dir "/HEAD") "ref: refs/heads/master\n")
                 (println "Initialized empty Idiot repository in" db "directory")))))
 
-(defn- file-autocomplete [root db address]
+(defn file-autocomplete [root db address]
   (if (< (count address) 4)
-    nil
+    (list "not-an-address")
     (let [dir (subs address 0 2)
           file (subs address 2)]
       (if (= (count file) 38)
-        address
+        (list address)
         (->> (str root "/" db "/objects/" dir)
                        io/file
                        file-seq
                        (filter #(.isFile %))
                        (map #(.getName %))
                        (filter #(= (subs % 0 (count file)) file))
-                       (map #(str dir %))
-                       )))))
+                       (map #(str dir %)))))))
 
 (defn- split-path [address {:keys [root db]}]
   (let [dir (subs address 0 2)
@@ -108,8 +107,11 @@
       (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? address) (println "Error: you must specify an address")
+
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
-      (> (count address) 1) (println (str "Error: ambiguous match for address '" address "'"))
+      (nil? full-address) (println "Error: that address doesn't exist")
+      (> (count full-address-list) 1) (println (str "Error: ambiguous match for address '" address "'"))
+
       (->> full-address (generate-path opts) io/file .exists not) (println "Error: that address doesn't exist")
       t (println (util/get-object-type (get-object opts full-address)))
       (= "tree" (util/get-object-type (get-object opts full-address))) (cat-tree opts full-address)
