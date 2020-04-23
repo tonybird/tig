@@ -11,9 +11,12 @@ Commands:
    cat-file {-p|-t} <address>
    commit <tree> -m "message" [(-p parent)...]
    commit-tree <tree> -m "message" [(-p parent)...]
+   explore [-p <port>]
    hash-object [-w] <file>
    help
    init
+   log --oneline [-n <count>] [<ref>]
+   rev-list [-n <count>] [<ref>]
    rev-parse <ref>
    switch [-c] <branch>
    write-wtree

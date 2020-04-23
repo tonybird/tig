@@ -111,8 +111,8 @@
                           (util/bytes->str)
                           (str/split #"\n"))
           parent (first (filter #(str/starts-with? % "parent") commit-body))]
+      (println commit-addr)
       (when parent (let [parent-addr (subs parent 7)]
-                     (println parent-addr)
                      (print-commit opts parent-addr (- n 1)))))))
 
 (defn- print-commit-oneline [opts commit-addr n]
@@ -120,29 +120,39 @@
     (let [commit-body (-> (db/get-object opts commit-addr)
                           (util/bytes->str)
                           (str/split #"\n"))
-          parent (first (filter #(str/starts-with? % "parent") commit-body))]
+          parent (first (filter #(str/starts-with? % "parent") commit-body))
+          title (-> (db/get-object opts commit-addr)
+                    (util/bytes->str)
+                    (str/split #"\n\n")
+                    (last)
+                    (str/split #"\n")
+                    (first))]
+      (println (str (subs commit-addr 0 7) " " title))
       (when parent (let [parent-addr (subs parent 7)]
-                     (println (str (subs parent-addr 0 7) " " (nth commit-body 5)))
                      (print-commit-oneline opts parent-addr (- n 1)))))))
 
 (defn parse-num-non-negative [args arg-name]
   (if (= (first args) arg-name)
-    {:n (try (Integer/parseInt (nth args 1)) (catch Exception e (println (str "Error: the argument for '" arg-name "' must be a non-negative integer.")) :fail)) :ref (last args)}
-    {:n 3000 :ref (first args)}))
+    {:present true :n (try (Integer/parseInt (nth args 1)) (catch Exception e (println (str "Error: the argument for '" arg-name "' must be a non-negative integer.")) :fail)) :ref (last args)}
+    {:present false :n 3000 :ref (first args)}))
 
+(defn- rev-list-get-file-name [dir ref n pres]
+  (if (number? n)
+    (get-ref-address dir "@")
+    (get-ref-address dir ref)))
 
 (defn rev-list [{:keys [root db] :as opts} args]
   (let [cmd (first args)
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("rev-list"))
+      (and (= cmd "-n") (= (count args) 1)) (println "Error: you must specify a numeric count with '-n'.")
       (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      (= (count args) 2) (println "Error: you must specify a numeric count with '-n'.")
-      :else (let [{n :n ref :ref} (parse-num-non-negative args "-n")
-                  file-name (get-ref-address dir ref)]
+      :else (let [{n :n ref :ref pres :present} (parse-num-non-negative args "-n")
+                  file-name (rev-list-get-file-name dir ref n pres)]
               (cond
-                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " cmd "."))
                 (= n :fail) nil
+                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " cmd "."))
                 :else (print-commit opts (.trim (slurp file-name)) n))))))
 
 (defn log [{:keys [root db] :as opts} args]
@@ -150,16 +160,12 @@
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("log"))
-      (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
-      (= (count args) 3) (println "Error: you must specify a numeric count with '-n'.")
       (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
-      :else (let [{n :n ref :ref} (parse-num-non-negative (rest args) "-n")
-                  file-name (get-ref-address dir ref)]
+      (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
+      (and (> (count args) 1) (= (nth args 1) "-n") (= (count args) 2)) (println "Error: you must specify a numeric count with '-n'.")
+      :else (let [{n :n ref :ref pres :present} (parse-num-non-negative (rest args) "-n")
+                  file-name (rev-list-get-file-name dir ref n pres)]
               (cond
-                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " cmd "."))
                 (= n :fail) nil
-                :else (print-commit-oneline opts (.trim (slurp file-name)) n))))))
-
-
-
-
+                (not (.exists (io/file file-name))) (println (str "Error: could not find ref named " ref "."))
+                :else (let [commit (.trim (slurp file-name))] (print-commit-oneline opts commit n)))))))
