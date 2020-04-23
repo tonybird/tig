@@ -25,14 +25,14 @@
       (if (= (count file) 38)
         (list address)
         (->> (str root "/" db "/objects/" dir)
-                       io/file
-                       file-seq
-                       (filter #(.isFile %))
-                       (map #(.getName %))
-                       (filter #(= (subs % 0 (count file)) file))
-                       (map #(str dir %)))))))
+             io/file
+             file-seq
+             (filter #(.isFile %))
+             (map #(.getName %))
+             (filter #(= (subs % 0 (count file)) file))
+             (map #(str dir %)))))))
 
-(defn- split-path [address {:keys [root db]}]
+(defn- split-path [address _]
   (let [dir (subs address 0 2)
         file (subs address 2)]
     (str dir "/" file)))

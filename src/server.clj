@@ -10,7 +10,7 @@
                                  [:body [:ul (map #(vector :li %) branches)]]))
 
 (defn get-handler [html]
-  (fn handler [request]
+  (fn handler [_]
     {:status 200
      :headers {"Content-Type" "text/html"}
      :body html}))
@@ -18,17 +18,16 @@
 (defn start-server [handler]
   (run-jetty handler {:port 3000}))
 
-
-(defn explore [{:keys [root db] :as opts} args]
+(defn explore [{:keys [root db] :as _} args]
   (let [cmd (first args)
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help/help '("explore"))
       (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (= (count args) 1) (println "Error: you must specify a numeric port with '-p'.")
-      :else (let [{n :n ref :ref} (switch/parse-num-non-negative args "-p")
+      :else (let [{n :n _ :ref} (switch/parse-num-non-negative args "-p")
                   files (->> (str dir "/refs/heads/") io/file file-seq rest)
                   filenames (sort (map #(.getName %) files))]
               (cond
                 (= n :fail) nil
-                :else ((println (str "Starting server on port " n "."))(start-server (get-handler (get-html filenames)))))))))
+                :else ((println (str "Starting server on port " n ".")) (start-server (get-handler (get-html filenames)))))))))
