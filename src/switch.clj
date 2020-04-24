@@ -14,7 +14,7 @@
       {:path (str/trim-newline (str dir "/" (subs head-contents 5))) :is-ref is-ref?}
       {:path head-addr :is-ref is-ref?})))
 
-(defn- get-ref-address [dir name]
+(defn get-ref-address [dir name]
   (if (or (= name "HEAD") (= name "@"))
     (:path (get-head-pointer dir))
     (str dir "/refs/heads/" name)))

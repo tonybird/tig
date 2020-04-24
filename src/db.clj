@@ -37,7 +37,7 @@
         file (subs address 2)]
     (str dir "/" file)))
 
-(defn- generate-path [opts address]
+(defn generate-path [opts address]
   (let [root (:root opts)
         db (:db opts)]
     (str root "/" db "/objects/" (split-path address opts))))

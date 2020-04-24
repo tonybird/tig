@@ -61,3 +61,9 @@
 (defn get-object-type [bytes]
   (let [type-bytes (first (split-at-byte 32 bytes))]
     (bytes->str type-bytes)))
+
+(defn dir-to-opts-map [dir]
+  (let [db-begins (str/last-index-of dir "/")
+        db (subs dir (+ 1 db-begins))
+        root (subs dir 0 db-begins)]
+    {:root root :db db}))
