@@ -162,8 +162,8 @@
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("log"))
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
       (and (> (count args) 1) (= (nth args 1) "-n") (= (count args) 2)) (println "Error: you must specify a numeric count with '-n'.")
       :else (let [{n :n ref :ref pres :present} (parse-num-non-negative (rest args) "-n")
                   file-name (rev-list-get-file-name dir ref n pres)]

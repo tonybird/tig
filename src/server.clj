@@ -1,10 +1,11 @@
 (ns server
   (:require [switch :as switch]
             [help :as help]
+            [util :as util]
+            [db :as db]
             [ring.adapter.jetty :refer [run-jetty]]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [hiccup.core :refer [html]]
             [hiccup.page :refer [html5]]))
 
 (defn- response [body-element]
@@ -54,8 +55,8 @@
 (defn- get-commit-list [dir commit-addr prev-commits]
   (let [opts (util/dir-to-opts-map dir)
         commit-body (-> (db/get-object opts commit-addr)
-                          (util/bytes->str)
-                          (str/split #"\n"))
+                        (util/bytes->str)
+                        (str/split #"\n"))
         parent (first (filter #(str/starts-with? % "parent") commit-body))
         message (-> (db/get-object opts commit-addr)
                     (util/bytes->str)
@@ -65,9 +66,10 @@
                     (first))
         prev-commits (conj prev-commits {:commit-addr (subs commit-addr 0 7),
                                          :message message})]
-    (if parent (let [parent-addr (subs parent 7)]
-                     (get-commit-list dir parent-addr prev-commits))
-               prev-commits)))
+    (if parent
+      (let [parent-addr (subs parent 7)]
+        (get-commit-list dir parent-addr prev-commits))
+      (reverse prev-commits))))
 
 (defn- commit-list-li [addr message]
   (vector :li (get-link "commit" addr) (str " " message)))
@@ -80,18 +82,18 @@
     [:ul {:class "commit-list"} (map commit->li commits)]))
 
 (defn- branch-response [dir branch]
-    (let [ref-address (switch/get-ref-address dir branch)
-          ref-exists? (.exists (io/file ref-address))]
-      (if ref-exists?
-        (response [:body (commit-list-ul dir branch)])
-        (response-404))))
+  (let [ref-address (switch/get-ref-address dir branch)
+        ref-exists? (.exists (io/file ref-address))]
+    (if ref-exists?
+      (response [:body (commit-list-ul dir branch)])
+      (response-404))))
 
 ;; 3. /commit/<address>: show commit, with linked parents and linked tree ;;
 
 (defn- disambiguation-li [dir full-addr]
   (let [opts (util/dir-to-opts-map dir)
         type (util/get-object-type (db/get-object opts full-addr))]
-  [:li (get-link type full-addr) (str " " type)]))
+    [:li (get-link type full-addr) (str " (" type ")")]))
 
 (defn- disambiguation-response [dir full-addr-list]
   (let [list-items (map #(disambiguation-li dir %) full-addr-list)
@@ -114,20 +116,20 @@
 (defn- commit-response [dir addr abbrev-addr]
   (let [opts (util/dir-to-opts-map dir)
         contents-str (->> addr
-                      (db/generate-path opts)
-                      io/file io/input-stream
-                      util/unzip util/bytes->str util/remove-header
-                      fix-gt-lt)
+                          (db/generate-path opts)
+                          io/file io/input-stream
+                          util/unzip util/bytes->str util/remove-header
+                          fix-gt-lt)
         contents (str/split-lines contents-str)
         tree (->> contents (filter #(str/starts-with? % "tree")) first format-tree)
         parents (->> contents (filter #(str/starts-with? % "parent")) (map format-parent))
         author (->> contents (filter #(str/starts-with? % "author")) first)
         committer (->> contents (filter #(str/starts-with? % "committer")) first)
         message (as-> contents c
-                      (.indexOf c "")
-                      (+ 1)
-                      (subvec contents c)
-                      (str/join "\n" c))
+                  (.indexOf c "")
+                  (+ 1 c)
+                  (subvec contents c)
+                  (str/join "\n" c))
         body [:body
               [:h1 "Commit " abbrev-addr]
               tree
@@ -140,22 +142,21 @@
 ;; 4. /tree/<address>: show tree, with linked trees and linked blobs ;;
 
 (defn- tree-recur [entry opts l]
-    (if (seq entry)
-      (let [mode (util/bytes->str (first (util/split-at-byte 32 entry)))
-            mode (if (= "40000" mode) "040000" mode)
-            mode-rest-bytes (second (util/split-at-byte 32 entry))
-            filename (util/bytes->str (first (util/split-at-byte 0 mode-rest-bytes)))
-            addr-bytes-and-rest (second (util/split-at-byte 0 mode-rest-bytes))
-            addr-bytes (first (split-at 20 addr-bytes-and-rest))
-            rest-entries (last (split-at 20 addr-bytes-and-rest))
-            addr (util/to-hex-string addr-bytes)
-            obj (db/get-object opts addr)
-            type (util/get-object-type obj)
-            link (get-link type addr)
-            e [:li [:tt (str mode " " type " ") link (str " " filename)]]]
-        (do
-          (tree-recur rest-entries opts (concat l e))))
-      l))
+  (if (seq entry)
+    (let [mode (util/bytes->str (first (util/split-at-byte 32 entry)))
+          mode (if (= "40000" mode) "040000" mode)
+          mode-rest-bytes (second (util/split-at-byte 32 entry))
+          filename (util/bytes->str (first (util/split-at-byte 0 mode-rest-bytes)))
+          addr-bytes-and-rest (second (util/split-at-byte 0 mode-rest-bytes))
+          addr-bytes (first (split-at 20 addr-bytes-and-rest))
+          rest-entries (last (split-at 20 addr-bytes-and-rest))
+          addr (util/to-hex-string addr-bytes)
+          obj (db/get-object opts addr)
+          type (util/get-object-type obj)
+          link (get-link type addr)
+          e (vector [:li [:tt (str mode " " type " ") link (str " " filename)]])]
+      (tree-recur rest-entries opts (concat l e)))
+    l))
 
 (defn- tree-response [dir addr abbrev-addr]
   (let [opts (util/dir-to-opts-map dir)
@@ -215,7 +216,7 @@
 
 (defn- start-server [dir]
   (let [handler (get-handler dir)]
-  (run-jetty handler {:port 3000})))
+    (run-jetty handler {:port 3000})))
 
 (defn explore [{:keys [root db] :as _} args]
   (let [cmd (first args)

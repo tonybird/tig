@@ -1,0 +1,3 @@
+This is the Spring 2020 COMP110 repo, accessible at https://github.com/comp110/comp110-20s.git
+
+I have that URL memorized because I've been a TA for a while and I have to reclone it for a student at least once a week
