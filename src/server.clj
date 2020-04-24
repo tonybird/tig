@@ -163,14 +163,22 @@
         removed-header (second (util/split-at-byte 0 bytes))
         entry-list (tree-recur removed-header opts '())
         body [:body
-              [:div [:h1 "Tree " addr]]
+              [:h1 "Tree " addr]
               [:ul {:class "tree-entries"} entry-list]]]
     (response body)))
 
 ;; 5. /blob/<address>: show blob data ;;
 
-(defn- blob-response [dir address]
-  (let [body [:body [:div [:h1 "Blob " address]]]]
+(defn- blob-response [dir addr]
+  (let [opts (util/dir-to-opts-map dir)
+        contents (->> addr
+                      (db/generate-path opts)
+                      io/file io/input-stream
+                      util/unzip util/bytes->str util/remove-header
+                      fix-gt-lt)
+        body [:body
+              [:h1 "Blob " addr]
+              [:pre contents]]]
     (response body)))
 
 (defn- address-response [dir addr expected-type]
