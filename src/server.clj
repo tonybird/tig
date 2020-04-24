@@ -96,8 +96,7 @@
 (defn- disambiguation-response [dir full-addr-list]
   (let [list-items (map #(disambiguation-li dir %) full-addr-list)
         body [:body
-              [:p "The given address prefix is ambiguous. Please disambiguate
-                  your intent by choosing from the following options."]
+              [:p "The given address prefix is ambiguous. Please disambiguate your intent by choosing from the following options."]
               [:ul {:class "disambiguation-list"} list-items]]]
     (response-300 body)))
 
@@ -112,7 +111,7 @@
   (let [addr (subs line 5)]
     [:div {:class "tree"} "tree " (get-link "tree" addr)]))
 
-(defn- commit-response [dir addr]
+(defn- commit-response [dir addr abbrev-addr]
   (let [opts (util/dir-to-opts-map dir)
         contents-str (->> addr
                       (db/generate-path opts)
@@ -126,10 +125,11 @@
         committer (->> contents (filter #(str/starts-with? % "committer")) first)
         message (as-> contents c
                       (.indexOf c "")
+                      (+ 1)
                       (subvec contents c)
                       (str/join "\n" c))
         body [:body
-              [:h1 "Commit " addr]
+              [:h1 "Commit " abbrev-addr]
               tree
               parents
               [:div {:class "author"} author]
@@ -154,22 +154,22 @@
             link (get-link type addr)
             e [:li [:tt (str mode " " type " ") link (str " " filename)]]]
         (do
-          (tree-recur rest-entries opts (conj l e))))
+          (tree-recur rest-entries opts (concat l e))))
       l))
 
-(defn- tree-response [dir addr]
+(defn- tree-response [dir addr abbrev-addr]
   (let [opts (util/dir-to-opts-map dir)
         bytes (db/get-object opts addr)
         removed-header (second (util/split-at-byte 0 bytes))
         entry-list (tree-recur removed-header opts '())
         body [:body
-              [:h1 "Tree " addr]
+              [:h1 "Tree " abbrev-addr]
               [:ul {:class "tree-entries"} entry-list]]]
     (response body)))
 
 ;; 5. /blob/<address>: show blob data ;;
 
-(defn- blob-response [dir addr]
+(defn- blob-response [dir addr abbrev-addr]
   (let [opts (util/dir-to-opts-map dir)
         contents (->> addr
                       (db/generate-path opts)
@@ -177,13 +177,13 @@
                       util/unzip util/bytes->str util/remove-header
                       fix-gt-lt)
         body [:body
-              [:h1 "Blob " addr]
+              [:h1 "Blob " abbrev-addr]
               [:pre contents]]]
     (response body)))
 
-(defn- address-response [dir addr expected-type]
+(defn- address-response [dir abbrev-addr expected-type]
   (let [opts (util/dir-to-opts-map dir)
-        full-addr-list (db/file-autocomplete (:root opts) (:db opts) addr)
+        full-addr-list (db/file-autocomplete (:root opts) (:db opts) abbrev-addr)
         no-match? (empty? full-addr-list)
         ambiguous? (> (count full-addr-list) 1)]
     (cond
@@ -193,10 +193,10 @@
                   not-found? (->> addr (db/generate-path opts) io/file .exists not)
                   type (and (not not-found?) (util/get-object-type (db/get-object opts addr)))]
               (cond not-found? (response-404)
-                    (not= type expected-type) (response-302 (str "/" type "/" addr))
-                    (= type "commit") (commit-response dir addr)
-                    (= type "tree") (tree-response dir addr)
-                    (= type "blob") (blob-response dir addr))))))
+                    (not= type expected-type) (response-302 (str "/" type "/" abbrev-addr))
+                    (= type "commit") (commit-response dir addr abbrev-addr)
+                    (= type "tree") (tree-response dir addr abbrev-addr)
+                    (= type "blob") (blob-response dir addr abbrev-addr))))))
 
 ;; HTTP stuff
 
