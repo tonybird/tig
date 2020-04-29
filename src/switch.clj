@@ -1,6 +1,8 @@
 (ns switch
   (:require [clojure.java.io :as io]
             [help :refer [help]]
+            [db :as db]
+            [util :as util]
             [tree :refer [commit-tree]]
             [clojure.string :as str]))
 
@@ -133,10 +135,10 @@
 
 (defn parse-num-non-negative [args arg-name]
   (if (= (first args) arg-name)
-    {:present true :n (try (Integer/parseInt (nth args 1)) (catch Exception e (println (str "Error: the argument for '" arg-name "' must be a non-negative integer.")) :fail)) :ref (last args)}
+    {:present true :n (try (Integer/parseInt (nth args 1)) (catch Exception _ (println (str "Error: the argument for '" arg-name "' must be a non-negative integer.")) :fail)) :ref (last args)}
     {:present false :n 3000 :ref (first args)}))
 
-(defn- rev-list-get-file-name [dir ref n pres]
+(defn- rev-list-get-file-name [dir ref n _]
   (cond
     (= (str n) ref) (get-ref-address dir "@")
     (= ref nil) (get-ref-address dir "@")
