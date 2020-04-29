@@ -137,9 +137,10 @@
     {:present false :n 3000 :ref (first args)}))
 
 (defn- rev-list-get-file-name [dir ref n pres]
-  (if (number? n)
-    (get-ref-address dir "@")
-    (get-ref-address dir ref)))
+  (cond
+    (= (str n) ref) (get-ref-address dir "@")
+    (= ref nil) (get-ref-address dir "@")
+    :else (get-ref-address dir ref)))
 
 (defn rev-list [{:keys [root db] :as opts} args]
   (let [cmd (first args)
