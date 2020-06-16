@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [db :as db]
             [help :as help]
-            [util :as util])
+            [util :as util]
+            [clojure.string :as str])
   (:import java.io.File))
 
 (def modes {:dir 40000 :file 100644})
@@ -117,7 +118,8 @@
         message (and (>= (count args) 3) (nth args 2))
         p (if (> (count args) 3) (subvec (vec args) 3) ())
         p-values-raw (filter #(not= "-p" %) p)
-        p-values (map #(first (db/file-autocomplete (:root opts) (:db opts) %)) p-values-raw)
+        p-values-list (map #(db/file-autocomplete (:root opts) (:db opts) %) p-values-raw)
+        p-values (map first p-values-list)
         empty-p-flag (= "-p" (last p))
         no-obj-at-p-addr (some #(when (not (db/address-exists? opts %)) %) p-values)
         not-commit #(not= "commit" (util/get-object-type (db/get-object opts %)))
@@ -133,6 +135,11 @@
       (nil? address) (println "Error: you must specify a tree address.")
       ; begin check for file-autocomplete
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))
+      (some #(< (count %) 4) p-values-raw) (let [bad-address (-> (filter #(< (count %) 4) p-values-raw) (first))]
+                                             (println (str "Error: too few characters specified for address '" bad-address "'")))
+      (some #(> (count %) 1) p-values-list) (let [bad-address (-> (filter #(> (count %) 1) p-values-list) (first) (first))
+                                                  address (first (filter #(str/starts-with? bad-address %) p-values-raw))]
+                                              (println (str "Error: ambiguous match for address '" address "'")))
       (nil? full-address) (println "Error: that address doesn't exist")
       (> (count full-address-list) 1) (println (str "Error: ambiguous match for address '" address "'"))
       ; end
@@ -146,7 +153,7 @@
 
       ;; Otherwise, write a new commit object and print its address
       :else (let [author-str "Linus Torvalds <torvalds@transmeta.com> 1581997446 -0500"
-                  parent-str (reduce #(str %1 "parent " %2 "\n") "" p-values-raw)
+                  parent-str (reduce #(str %1 "parent " %2 "\n") "" p-values)
                   commit-format (str "tree %s\n"
                                      "%s"
                                      "author %s\n"
