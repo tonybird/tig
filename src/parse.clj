@@ -14,7 +14,7 @@
 
 (defn parse-flags [args]
   (let [top-level-flags {"-r" parse-r-flag "-d" parse-d-flag}]
-    (loop [result {:command args :db ".idiot" :root "."} opts top-level-flags]
+    (loop [result {:command args :db ".tig" :root "."} opts top-level-flags]
       (let [flag (first (:command result)) command (:command result)]
         (if (contains? opts flag)
           (recur

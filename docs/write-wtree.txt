@@ -1,6 +1,6 @@
-idiot write-wtree: write the working tree to the database
+tig write-wtree: write the working tree to the database
 
-Usage: idiot write-wtree
+Usage: tig write-wtree
 
 Arguments:
    -h       print this message

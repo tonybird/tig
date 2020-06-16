@@ -1,4 +1,4 @@
-(ns idiot
+(ns tig
   (:require [help :as help]
             [db :as db]
             [parse :as parse]

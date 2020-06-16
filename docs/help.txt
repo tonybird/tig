@@ -1,6 +1,6 @@
-idiot help: print help for a command
+tig help: print help for a command
 
-Usage: idiot help <command>
+Usage: tig help <command>
 
 Arguments:
    <command>   the command to print help for

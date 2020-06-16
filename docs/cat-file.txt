@@ -1,6 +1,6 @@
-idiot cat-file: print information about an object
+tig cat-file: print information about an object
 
-Usage: idiot cat-file {-p|-t} <address>
+Usage: tig cat-file {-p|-t} <address>
 
 Arguments:
    -h          print this message

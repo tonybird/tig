@@ -1,6 +1,6 @@
-idiot hash-object: compute address and maybe create blob from file
+tig hash-object: compute address and maybe create blob from file
 
-Usage: idiot hash-object [-w] <file>
+Usage: tig hash-object [-w] <file>
 
 Arguments:
    -h       print this message

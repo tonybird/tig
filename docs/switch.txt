@@ -1,6 +1,6 @@
-idiot switch: change what HEAD points to
+tig switch: change what HEAD points to
 
-Usage: idiot switch [-c] <branch>
+Usage: tig switch [-c] <branch>
 
 Arguments:
    -c   create the branch before switching to it

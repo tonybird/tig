@@ -1,6 +1,6 @@
-idiot log: print abbreviated commit addresses and commit summaries
+tig log: print abbreviated commit addresses and commit summaries
 
-Usage: idiot log --oneline [-n <count>] [<ref>]
+Usage: tig log --oneline [-n <count>] [<ref>]
 
 Arguments:
    -n <count>   stop after <count> revisions (default: don't stop)

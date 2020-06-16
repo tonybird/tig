@@ -86,7 +86,7 @@
        (update :contents #(sort-by :type %))))             ; sort so :dir come before :file
     entry))
 
-; can be run from repl but using "(store-root {:root "./test-dir" :db ".idiot"})"
+; can be run from repl but using "(store-root {:root "./test-dir" :db ".tig"})"
 
 (defn- store-root [{:keys [root db] :as opts}]
   (let [entry
@@ -104,7 +104,7 @@
         db (:db opts)]
     (cond
       h (help/help '("write-wtree"))
-      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `tig init`?)")
       (some? cmd) (println "Error: write-wtree accepts no arguments")
       :else (let [hash (:hash (store-root {:root root :db db}))]
               (if (not= nil hash)
@@ -131,7 +131,7 @@
         verbose? (not (contains? opts :silent))]
     (cond
       h (help/help '("commit-tree"))
-      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `tig init`?)")
       (nil? address) (println "Error: you must specify a tree address.")
       ; begin check for file-autocomplete
       (< (count address) 4) (println (str "Error: too few characters specified for address '" address "'"))

@@ -1,6 +1,6 @@
-idiot rev-parse: determine which commit a ref points to
+tig rev-parse: determine which commit a ref points to
 
-Usage: idiot rev-parse <ref>
+Usage: tig rev-parse <ref>
 
 <ref> can be:
 - a branch name, like 'master'

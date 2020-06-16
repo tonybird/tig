@@ -28,7 +28,7 @@
       (or (= arg "-h") (= arg "--help")) (help '("rev-parse"))
       (empty? args) (println "Error: you must specify a branch name.")
       (> (count args) 1) (println "Error: you must specify a branch name and nothing else.")
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       :else (let [address (get-ref-address dir arg)]
               (if (.exists (io/file address))
                 (print (slurp address))
@@ -44,7 +44,7 @@
       (or (= cmd "-h") (= cmd "--help")) (help '("switch"))
       (empty? args) (println "Error: you must specify a branch name.")
       (or (> (count args) 2) (and (> (count args) 1) (not c))) (println "Error: you may only specify one branch name.")
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       :else (let [branch-name (if c (second args) (first args))
                   branch-addr (str dir "/refs/heads/" branch-name)
                   exists? (.exists (io/file branch-addr))
@@ -92,7 +92,7 @@
       (and d (= 1 (count args))) (println "Error: you must specify a branch name.")
       (and d (not= (count args) 2)) (println "Error: invalid arguments.")
       (and (not d) (not= (count args) 0)) (println "Error: invalid arguments.")
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       d (delete-branch dir (second args))
       :else (print-branches dir))))
 
@@ -150,7 +150,7 @@
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("rev-list"))
       (and (= cmd "-n") (= (count args) 1)) (println "Error: you must specify a numeric count with '-n'.")
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       :else (let [{n :n ref :ref pres :present} (parse-num-non-negative args "-n")
                   file-name (rev-list-get-file-name dir ref n pres)]
               (cond
@@ -164,7 +164,7 @@
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help '("log"))
       (not= cmd "--oneline") (println "Error: log requires the --oneline switch")
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       (and (> (count args) 1) (= (nth args 1) "-n") (= (count args) 2)) (println "Error: you must specify a numeric count with '-n'.")
       :else (let [{n :n ref :ref pres :present} (parse-num-non-negative (rest args) "-n")
                   file-name (rev-list-get-file-name dir ref n pres)]

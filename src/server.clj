@@ -223,7 +223,7 @@
         dir (str root "/" db)]
     (cond
       (or (= cmd "-h") (= cmd "--help")) (help/help '("explore"))
-      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file dir))) (println "Error: could not find database. (Did you run `tig init`?)")
       (= (count args) 1) (println "Error: you must specify a numeric port with '-p'.")
       :else (let [{n :n _ :ref} (switch/parse-num-non-negative args "-p")]
               (cond

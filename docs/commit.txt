@@ -1,6 +1,6 @@
-idiot commit: create a commit and advance the current branch
+tig commit: create a commit and advance the current branch
 
-Usage: idiot commit <tree> -m "message" [(-p parent)...]
+Usage: tig commit <tree> -m "message" [(-p parent)...]
 
 Arguments:
    -h               print this message

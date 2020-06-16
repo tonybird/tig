@@ -15,7 +15,7 @@
       :else (do (io/make-parents (str dir "/objects/foo"))
                 (io/make-parents (str dir "/refs/heads/foo"))
                 (spit (str dir "/HEAD") "ref: refs/heads/master\n")
-                (println "Initialized empty Idiot repository in" db "directory")))))
+                (println "Initialized empty Tig repository in" db "directory")))))
 
 (defn file-autocomplete [root db address]
   (if (< (count address) 4)
@@ -60,7 +60,7 @@
         db (:db opts)]
     (cond
       h (help '("hash-object"))
-      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `tig init`?)")
       (nil? filename) (println "Error: you must specify a file.")
       :else (let [file (try (slurp (str root "/" filename)) (catch Exception _))
                   address (->> file (add-header "blob") sha1-sum)]
@@ -104,7 +104,7 @@
         full-address (first full-address-list)]
     (cond
       h (help '("cat-file"))
-      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `idiot init`?)")
+      (not (.exists (io/file (str root "/" db)))) (println "Error: could not find database. (Did you run `tig init`?)")
       (and (not p) (not t)) (println "Error: the -p or -t switch is required")
       (nil? address) (println "Error: you must specify an address")
 

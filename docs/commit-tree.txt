@@ -1,6 +1,6 @@
-idiot commit-tree: write a commit object based on the given tree
+tig commit-tree: write a commit object based on the given tree
 
-Usage: idiot commit-tree <tree> -m "message" [(-p parent)...]
+Usage: tig commit-tree <tree> -m "message" [(-p parent)...]
 
 Arguments:
    -h               print this message

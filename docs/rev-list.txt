@@ -1,6 +1,6 @@
-idiot rev-list: list preceding revisions, latest first
+tig rev-list: list preceding revisions, latest first
 
-Usage: idiot rev-list [-n <count>] [<ref>]
+Usage: tig rev-list [-n <count>] [<ref>]
 
 Arguments:
    -n <count>   stop after <count> revisions (default: don't stop)

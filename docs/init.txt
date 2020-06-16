@@ -1,6 +1,6 @@
-idiot init: initialize a new database
+tig init: initialize a new database
 
-Usage: idiot init
+Usage: tig init
 
 Arguments:
    -h   print this message

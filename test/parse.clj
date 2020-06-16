@@ -12,10 +12,10 @@
 
 (describe "parse-flags"
           (it "parses when none are present"
-              (should= '{:root "." :db ".idiot" :command ("init")} (sut/parse-flags '("init"))))
+              (should= '{:root "." :db ".tig" :command ("init")} (sut/parse-flags '("init"))))
           (it "parses r when present"
-              (should= '{:root "spec" :db ".idiot" :command ("init")} (sut/parse-flags '("-r" "spec" "init"))))
+              (should= '{:root "spec" :db ".tig" :command ("init")} (sut/parse-flags '("-r" "spec" "init"))))
           (it "parses d when present"
-              (should= '{:root "." :db ".idiot-test" :command ("init")} (sut/parse-flags '("-d" ".idiot-test" "init"))))
+              (should= '{:root "." :db ".tig-test" :command ("init")} (sut/parse-flags '("-d" ".tig-test" "init"))))
           (it "parses r & d present"
-              (should= '{:root "spec" :db "idiot-test" :command ("init")} (sut/parse-flags '("-r" "spec" "-d" "idiot-test" "init")))))
+              (should= '{:root "spec" :db "tig-test" :command ("init")} (sut/parse-flags '("-r" "spec" "-d" "tig-test" "init")))))
